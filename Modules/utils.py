@@ -224,7 +224,7 @@ def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_
     
     return train_df, test_df, model_coef
 
-def plot_feature_importance(model_weights, feature_names, top = 0, x_label = 'Importance', y_label = 'Features', tick_size = 14, label_size = 18, text_size = 12, figure_size = (8, 18)):
+def plot_feature_importance(model_weights, feature_names, top = 0, title = None, x_label = 'Importance', y_label = 'Features', title_size = 22, tick_size = 14, label_size = 18, figure_size = (8, 18)):
     import seaborn as sns
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -241,6 +241,9 @@ def plot_feature_importance(model_weights, feature_names, top = 0, x_label = 'Im
         sns.barplot(x = "weights", y = "features", data = weights_df)
     else:
         sns.barplot(x = "weights", y = "features", data = weights_df.head(top))
+
+    if title != None:
+        plt.title(title, size = title_size)
     plt.xticks(size = tick_size)
     plt.yticks(size = tick_size)
     plt.xlabel(x_label, size = label_size)
