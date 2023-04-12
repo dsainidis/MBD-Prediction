@@ -1,14 +1,3 @@
 Greece/data/wnv_cases_original/password.txt
 Greece/data/wnv_cases_original/WNV_2010-2021_EAA_final.xlsx
-Greece/data/GR_WNV_cases_2010-2021.csv
-Greece/data/GR_WNV_cases_2010-2021_processed.csv
-Greece/data/GR_WEB_Demographics_Raw.csv
-Greece/data/GR_WEB_Demographics_Processed.csv
-Greece/data/GR_Thessaly_WNV_Dataset_2010_2021.csv
-Greece/data/GR_Thessaly_Spatiotemporal_Timeline_Biweekly_2010-2021.csv
-Greece/data/GR_Thessaly_Spatiotemporal_Timeline_Biweekly_2010-2021_filled.csv
-Greece/data/GR_Thessaly_Spatiotemporal_Timeline_2010-2021.csv
-Greece/data/GR_SHP_LAU1_area.csv
-Greece/data/GR_MSQ_culex_2011-2022.csv
-Greece/data/GR_Thessaly_Epidemiological_Timeline_2010-2021.csv
-Greece/data/GR_MSQ_culex_2011-2022_processed.csv
+*.csv
