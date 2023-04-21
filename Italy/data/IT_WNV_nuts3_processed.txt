@@ -1,0 +1,9 @@
+brescia
+mantova
+padova
+palermo
+rovigo
+treviso
+venezia
+verona
+vicenza

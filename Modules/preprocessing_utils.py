@@ -6,6 +6,7 @@ import pandas as pd
 from fiona.crs import from_epsg
 import geopandas as gpd
 from statistics import mean
+import unicodedata
 
 def create_grid(river_shapes, data_shapes, col_municipal='NAME', col_geometry='geometry', dimension=2):
     """Creates the cell grid for the desired area
@@ -162,6 +163,22 @@ def read_river_shapes(col_id, path_rivers, col_geometry='geometry', filter=False
     river_shapes = river_shapes[[col_id, col_geometry]]
     return river_shapes
 
+def remove_accents(input_str):
+    """Removes langueage accents from strings
+    
+    Parameters
+    --------
+    input_str : string,
+        The string with accents
+                
+    Returns
+    ----------
+    string: the string without accents 
+    """
+    
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
+
 def process_greek(frame, column):
     _RE_COMBINE_WHITESPACE = re.compile(r"\s+")
 
@@ -176,6 +193,33 @@ def process_greek(frame, column):
     frame[column] = frame[column].apply(lambda x : x.replace('ώ','ω'))
     frame[column] = frame[column].apply(lambda x : x.replace('-',' '))
     frame[column] = frame[column].apply(lambda x : _RE_COMBINE_WHITESPACE.sub(" ", x).strip())
+
+def process_italic(frame, column):
+    _RE_COMBINE_WHITESPACE = re.compile(r"\s+")
+
+    frame[column] = frame[column].apply(lambda x : x.lower())
+    frame[column] = frame[column].apply(lambda x : _RE_COMBINE_WHITESPACE.sub(" ", x).strip())
+    frame[column] = frame[column].apply(lambda x : re.sub(r'\([^)]*\)', '', x))
+    frame[column] = frame[column].apply(lambda x : remove_accents(x))
+    frame[column] = frame[column].apply(lambda x : x.replace("'", " " ))
+    frame[column] = frame[column].apply(lambda x : x.replace("-", " " ))
+    frame[column] = frame[column].apply(lambda x : x.replace("’", " " ))
+    
+    frame[column] = frame[column].apply(lambda x : _RE_COMBINE_WHITESPACE.sub(" ", x).strip())
+    frame[column] = frame[column].apply(lambda x : x.replace("s. ", "saint " ))
+    frame[column] = frame[column].apply(lambda x : x.replace("san ", "saint " ))
+    frame[column] = frame[column].apply(lambda x : x.replace("santa ", "saint " ))
+    frame[column] = frame[column].apply(lambda x : x.replace("sant ", "saint " ))
+    frame[column] = frame[column].apply(lambda x : x.replace("santo ", "saint " ))
+
+    frame[column] = frame[column].apply(lambda x : x.replace(" d ", " da " ))
+    frame[column] = frame[column].apply(lambda x : x.replace(" di ", " da " ))
+    frame[column] = frame[column].apply(lambda x : x.replace(" del ", " da " ))
+    frame[column] = frame[column].apply(lambda x : x.replace(" dell ", " da " ))
+    frame[column] = frame[column].apply(lambda x : x.replace(" delle ", " da " ))
+    frame[column] = frame[column].apply(lambda x : x.replace(" della ", " da " ))
+    frame[column] = frame[column].apply(lambda x : x.replace(" da ", " da " ))
+    frame[column] = frame[column].apply(lambda x : x.replace(" de ", " da " ))
 
 
 def fillna(dataframe,fill_list):

@@ -465,7 +465,10 @@ def evaluate_operational(results, k, prob_threshold):
         all_discovered = annual['Discovered'].sum()
         all_outof = annual['Out of'].sum()
         #all_percentage = annual['percentage'].mean()
-        all_percentage = all_discovered/all_outof
+        if all_discovered == 0 and all_outof == 0:
+            all_percentage = np.nan
+        else:
+            all_percentage = all_discovered/all_outof
         
         cumulative_df = cumulative_df.append({'Year': year,
                                               'Infected': all_infected,
@@ -478,7 +481,7 @@ def evaluate_operational(results, k, prob_threshold):
     cumulative_df = cumulative_df.astype({'Year': 'int', 'Infected': 'int', 'Discovered': 'int', 'Out Of':'int', 'percentage': 'float'})
     
     avg = cumulative_df['percentage'].mean()
-    w_avg = np.average(cumulative_df['percentage'], weights = list(cumulative_df['Infected']), axis = 0)
+    w_avg = np.average(cumulative_df['percentage'].fillna(0), weights = list(cumulative_df['Infected']), axis = 0)
     
     #return operational_df.iloc[: , :-1], cumulative_df.iloc[: , :-1], avg, w_avg
     return operational_df, cumulative_df, avg, w_avg
@@ -494,6 +497,8 @@ def classification_report(results_train, results_test, threshold = 0.5, beta = 1
     import numpy as np
     import pandas as pd
     from sklearn.metrics import balanced_accuracy_score, precision_score, recall_score, fbeta_score, log_loss, confusion_matrix 
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning)
     
     years = np.sort(results_test['year'].unique())
     
@@ -509,9 +514,9 @@ def classification_report(results_train, results_test, threshold = 0.5, beta = 1
         predictions_train = np.where(probabilities_train > threshold, 1, 0)
         
         bal_acc_train = balanced_accuracy_score(y_train, predictions_train)
-        precision_train = precision_score(y_train, predictions_train)
-        recall_train = recall_score(y_train, predictions_train)
-        fb_score_train = fbeta_score(y_train, predictions_train, beta = beta)
+        precision_train = precision_score(y_train, predictions_train, labels = [0,1], zero_division = 0)
+        recall_train = recall_score(y_train, predictions_train, labels = [0,1], zero_division = 0)
+        fb_score_train = fbeta_score(y_train, predictions_train, beta = beta, labels = [0,1], zero_division = 0)
         log_loss_train = log_loss(y_train, probabilities_train, labels = [0,1])
         
         report_train = report_train.append({'Year': f'{year}'.split('.')[0],
@@ -537,9 +542,9 @@ def classification_report(results_train, results_test, threshold = 0.5, beta = 1
         positive_rate = (fp+tp) / (tp + fn + fp + tn)
     
         bal_acc_test = balanced_accuracy_score(y_test, predictions_test)
-        precision_test = precision_score(y_test, predictions_test)
-        recall_test = recall_score(y_test, predictions_test)
-        fb_score_test = fbeta_score(y_test, predictions_test, beta = beta)
+        precision_test = precision_score(y_test, predictions_test, labels = [0,1], zero_division = 0)
+        recall_test = recall_score(y_test, predictions_test, labels = [0,1], zero_division = 0)
+        fb_score_test = fbeta_score(y_test, predictions_test, beta = beta, labels = [0,1], zero_division = 0)
         log_loss_test = log_loss(y_test, probabilities_test, labels = [0,1])
         
         report_test = report_test.append({'Year': f'{year}'.split('.')[0],
