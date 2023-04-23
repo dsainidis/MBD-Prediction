@@ -7,6 +7,7 @@ from fiona.crs import from_epsg
 import geopandas as gpd
 from statistics import mean
 import unicodedata
+from sklearn.neighbors import BallTree
 
 def create_grid(river_shapes, data_shapes, col_municipal='NAME', col_geometry='geometry', dimension=2):
     """Creates the cell grid for the desired area
@@ -325,3 +326,28 @@ def convert_multiple_cases(dataframe, target_col = 'case'):
     dataframe[target_col] = dataframe['case'].apply(lambda x : 1 if(x > 0) else 0)
 
     return dataframe
+
+def calculate_nearest_topological(data, topological, neighbors=1):
+    topological['x_rad'] = topological['x'].apply(lambda x: np.deg2rad(x))
+    topological['y_rad'] = topological['y'].apply(lambda x: np.deg2rad(x))
+    
+    data['x_rad'] = data['x'].apply(lambda x: np.deg2rad(x))
+    data['y_rad'] = data['y'].apply(lambda x: np.deg2rad(x))
+    
+    ball = BallTree(topological[["y_rad", "x_rad"]].values, metric='haversine')
+    distances, indices = ball.query(data[["y_rad", "x_rad"]].values, k = neighbors)
+    
+    if neighbors>1:
+        distances = [mean(d) for d in distances]
+        distances = [(d * 6371) for d in distances]
+    else:
+        distances = [(d * 6371).tolist()[0] for d in distances]
+        
+    indices = indices.tolist()
+    indices = [i[0] for i in indices]
+    del data['x_rad']
+    del data['y_rad']
+    del topological['x_rad']
+    del topological['y_rad']
+    
+    return distances, indices
