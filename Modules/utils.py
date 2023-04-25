@@ -563,6 +563,13 @@ def classification_report(results_train, results_test, threshold = 0.5, beta = 1
                                         fbeta_label : round(report_train[fbeta_label].mean(), round_factor),
                                         'Loss' : round(report_train["Loss"].mean(), round_factor)}, ignore_index = True)
     
+    report_train = report_train.append({'Year': 'Median',
+                                        'Accuracy': round(report_train["Accuracy"].median(), round_factor),
+                                        'Precision': round(report_train["Precision"].median(), round_factor),
+                                        'Recall': round(report_train["Recall"].median(), round_factor), 
+                                        fbeta_label : round(report_train[fbeta_label].median(), round_factor),
+                                        'Loss' : round(report_train["Loss"].median(), round_factor)}, ignore_index = True)    
+    
     report_test = report_test.append({'Year': 'Mean',
                                       'Infected': round(report_test["Infected"].mean(), round_factor),
                                       'Positive Rate': round(report_test["Positive Rate"].mean(), round_factor),
@@ -571,5 +578,14 @@ def classification_report(results_train, results_test, threshold = 0.5, beta = 1
                                       'Recall': round(report_test["Recall"].mean(), round_factor), 
                                       fbeta_label : round(report_test[fbeta_label].mean(), round_factor),
                                       'Loss' : round(report_test["Loss"].mean(), round_factor)}, ignore_index = True)
+
+    report_test = report_test.append({'Year': 'Median',
+                                      'Infected': round(report_test["Infected"].median(), round_factor),
+                                      'Positive Rate': round(report_test["Positive Rate"].median(), round_factor),
+                                      'Accuracy': round(report_test["Accuracy"].median(), round_factor),
+                                      'Precision': round(report_test["Precision"].median(), round_factor),
+                                      'Recall': round(report_test["Recall"].median(), round_factor), 
+                                      fbeta_label : round(report_test[fbeta_label].median(), round_factor),
+                                      'Loss' : round(report_test["Loss"].median(), round_factor)}, ignore_index = True)
         
     return report_train, report_test
