@@ -163,7 +163,7 @@ def transform_data(X_train, X_test, y_train, y_test, random_r, nearmiss, smote, 
     
     X_train_inversed = scaler.inverse_transform(X_train)
     X_train_df = pd.DataFrame(X_train_inversed, columns = columns_Xtrain)
-    X_train_df = X_train_df.astype({'lau1_id':'int', 'day':'int', 'month':'int', 'year':'int'})
+    X_train_df = X_train_df.astype({'day':'int', 'month':'int', 'year':'int'})
 
     indicies_to_remove = []
     for item in exclude_features:
@@ -202,7 +202,7 @@ def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_
     train_df = pd.DataFrame()
     train_df['x'] = data_train['x'].reset_index(drop = True)
     train_df['y'] = data_train['y'].reset_index(drop = True)
-    train_df['muni_code'] = data_train['lau1_id'].reset_index(drop = True)
+    #train_df['municipality'] = data_train['lau1'].reset_index(drop = True)
     train_df['day'] = data_train['day'].reset_index(drop = True)
     train_df['month'] = data_train['month'].reset_index(drop = True)
     train_df['year'] = data_train['year'].reset_index(drop = True)
@@ -214,7 +214,6 @@ def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_
     test_df['x'] = data_test['x'].reset_index(drop = True)
     test_df['y'] = data_test['y'].reset_index(drop = True)
     test_df['municipality'] = data_test['lau1'].reset_index(drop = True)
-    test_df['muni_code'] = data_test['lau1_id'].reset_index(drop = True)
     test_df['day'] = data_test['day'].reset_index(drop = True)
     test_df['month'] = data_test['month'].reset_index(drop = True)
     test_df['year'] = data_test['year'].reset_index(drop = True)
