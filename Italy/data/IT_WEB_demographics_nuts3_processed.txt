@@ -1,0 +1,7 @@
+belluno
+padova
+rovigo
+treviso
+venezia
+verona
+vicenza
