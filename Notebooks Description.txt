@@ -1,0 +1,9 @@
+1. COUNTRY_NUTS2_Grid -- Creates the grid file for a region of interest [input: shapefiles | output: grid.csv]
+2. COUNTRY_NUTS2_Timeline_Year(s)(_Month) -- Creates the timeline for a region of interest [input: grid.csv | output: timeline.csv, timeline_biweekly.csv] **used to get all features
+3. COUNTRY_NUTS2_WNV_Cases_Year(s) -- Creates the epidemiological timeline for a region of interest [input: case_file.csv | output: cases.csv]
+4. COUNTRY_NUTS2_Mosquitoes_Year(s)(_Month) -- Produces mosquito predictions for a region of interest [input: timeline_biweekly_filled.csv, mosquitoes.csv | output: mosquito_predictions.csv]
+5. COUNTRY_NUTS2_Dataset_Year(s)(_Month) -- Creates the dataset to be used for modeling [input: timeline_biweekly_filled.csv, cases.csv, demographics.csv, mosquito_predictions.csv | output: dataset.csv]
+6. COUNTRY_NUTS2_add_geomorphological_Year(s)(_Month) -- Adds geomorphological features to the dataset [input: dataset.csv, geomorphological.csv | output: dataset.csv]
+7. COUNTRY_NUTS2_add_landcover_Year(s)(_Month) -- Adds landcover features to the dataset [input: dataset.csv, landcover.csv | output: dataset.csv]
+8. COUNTRY_NUTS2_Modeling_Year(s)
+9. COUNTRY_NUTS2_Make_Predictions_Year-Month
