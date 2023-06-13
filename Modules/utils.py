@@ -412,6 +412,8 @@ def plot_pr_curve(results, beta = 2, plot_fbeta = False, model_name = 'Logistic 
 
 
 def evaluate_operational(results, k, prob_threshold = -1, ouput_random = False, sampling_number = 10):
+
+    #TODO: write code when output_random == False
     import numpy as np
     import pandas as pd
     import random
