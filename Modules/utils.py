@@ -411,9 +411,10 @@ def plot_pr_curve(results, beta = 2, plot_fbeta = False, model_name = 'Logistic 
     plt.show()
 
 
-def evaluate_operational(results, k, prob_threshold):
+def evaluate_operational(results, k, prob_threshold = -1, ouput_random = False, sampling_number = 10):
     import numpy as np
     import pandas as pd
+    import random
     
     days = np.sort(results['day'].unique())
     months = np.sort(results['month'].unique())
@@ -439,51 +440,84 @@ def evaluate_operational(results, k, prob_threshold):
                     discovered = len(sorted_df.head(k).loc[(sorted_df['case'] == 1)])
                 else:
                     discovered = len(sorted_df.head(k).loc[(sorted_df['case'] == 1) & (sorted_df['probability'] >= prob_threshold)])
+                
+                if ouput_random:
+                    if infected != 0:
+                        idx_list = prediction_df.index.to_list()
+                        random_discovery_list = []
+
+                        for _ in range(sampling_number):
+                            random_sample = random.sample(idx_list, k)
+                            random_df = prediction_df[prediction_df.index.isin(random_sample)]
+                            random_hits = len(random_df.loc[(random_df['case'] == 1)])
+                            random_discovery_list.append(random_hits)
+                        
+                        random_discovered = sum(random_discovery_list)/len(random_discovery_list)
+                    else:
+                        random_discovered = 0
 
                 if infected == 0:
                     outof = 0
                     percentage = np.nan
+                    random_percentage = np.nan
                 elif infected > k:
                     outof = k
                     percentage = discovered/k
+                    random_percentage = random_discovered/k
                 else:
                     outof = infected
                     percentage = discovered/infected
+                    random_percentage = random_discovered/infected
                     
                 operational_df = operational_df.append({'Prediction Date': date,
                                                         'Infected': infected,
                                                         'Discovered': discovered,
+                                                        'Random Discovered': random_discovered,
                                                         'Out of': outof,
                                                         'Percentage': 'NaN' if (pd.isna(percentage)) else f'{percentage*100:.2f} %',
-                                                        'percentage' : f'{percentage:.4f}'}, ignore_index = True)
+                                                        'percentage' : f'{percentage:.4f}',
+                                                        'Random Percentage' : 'NaN' if (pd.isna(random_percentage)) else f'{random_percentage*100:.2f} %',
+                                                        'random percentage' : f'{random_percentage:.4f}',}, ignore_index = True)
                 
-                operational_df = operational_df.astype({'Infected':'int', 'Discovered':'int', 'Out of':'int', 'percentage':'float'})
+                operational_df = operational_df.astype({'Infected':'int', 'Discovered':'int', 'Random Discovered':'float', 'Out of':'int', 'percentage':'float', 'random percentage':'float'})
         
         annual = operational_df.loc[operational_df['Prediction Date'].str.endswith(str(year))]
         all_infected = annual['Infected'].sum()
         all_discovered = annual['Discovered'].sum()
+        all_random_discovered = annual['Random Discovered'].sum()
         all_outof = annual['Out of'].sum()
         #all_percentage = annual['percentage'].mean()
+
         if all_discovered == 0 and all_outof == 0:
             all_percentage = np.nan
         else:
             all_percentage = all_discovered/all_outof
+
+        if all_random_discovered == 0 and all_outof == 0:
+            all_random_percentage = np.nan
+        else:
+            all_random_percentage = all_random_discovered/all_outof
         
         cumulative_df = cumulative_df.append({'Year': year,
                                               'Infected': all_infected,
                                               'Discovered': all_discovered,
+                                              'Random Discovered' : all_random_discovered,
                                               'Out Of': all_outof,
                                               'Percentage': f'{all_percentage*100:.2f} %',
-                                              'percentage': f'{all_percentage:.4f}'}, ignore_index = True)
+                                              'percentage': f'{all_percentage:.4f}',
+                                              'Random Percentage': f'{all_random_percentage*100:.2f} %',
+                                              'random percentage': f'{all_random_percentage:.4f}'}, ignore_index = True)
         
     
-    cumulative_df = cumulative_df.astype({'Year': 'int', 'Infected': 'int', 'Discovered': 'int', 'Out Of':'int', 'percentage': 'float'})
+    cumulative_df = cumulative_df.astype({'Year': 'int', 'Infected': 'int', 'Discovered': 'int', 'Random Discovered':'float', 'Out Of':'int', 'percentage': 'float', 'random percentage': 'float'})
     
     avg = cumulative_df['percentage'].mean()
     w_avg = np.average(cumulative_df['percentage'].fillna(0), weights = list(cumulative_df['Infected']), axis = 0)
+    r_avg = cumulative_df['random percentage'].mean()
+    r_w_avg = np.average(cumulative_df['random percentage'].fillna(0), weights = list(cumulative_df['Infected']), axis = 0)
     
     #return operational_df.iloc[: , :-1], cumulative_df.iloc[: , :-1], avg, w_avg
-    return operational_df, cumulative_df, avg, w_avg
+    return operational_df, cumulative_df, avg, w_avg, r_avg, r_w_avg
      
 
 def operational_year(data, year):

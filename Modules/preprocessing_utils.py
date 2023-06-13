@@ -194,6 +194,8 @@ def process_greek(frame, column):
     frame[column] = frame[column].apply(lambda x : x.replace('ώ','ω'))
     frame[column] = frame[column].apply(lambda x : x.replace('-',' '))
     frame[column] = frame[column].apply(lambda x : x.replace('–',' '))
+    frame[column] = frame[column].apply(lambda x : x.replace('ν. ',''))
+
     
     frame[column] = frame[column].apply(lambda x : _RE_COMBINE_WHITESPACE.sub(" ", x).strip())
 
@@ -325,7 +327,7 @@ def convert_multiple_cases(dataframe, target_col = 'case'):
         if (case_count >= 2):
             dataframe = dataframe.append([dataframe[dataframe[target_col] == case_count]] * (case_count - 1), ignore_index=True)
             
-    dataframe[target_col] = dataframe['case'].apply(lambda x : 1 if(x > 0) else 0)
+    dataframe[target_col] = dataframe[target_col].apply(lambda x : 1 if(x > 0) else 0)
 
     return dataframe
 
