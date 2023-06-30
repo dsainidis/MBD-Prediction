@@ -2,3 +2,8 @@ Greece/data/wnv_cases_original/password.txt
 *.xlsx
 *.csv
 *.png
+*.cpg
+*.dbf
+*.prj
+*.shp
+*.shx

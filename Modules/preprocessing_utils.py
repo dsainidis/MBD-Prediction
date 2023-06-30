@@ -8,6 +8,11 @@ import geopandas as gpd
 from statistics import mean
 import unicodedata
 from sklearn.neighbors import BallTree
+from math import radians, sin, cos, sqrt, atan2
+from scipy.spatial.distance import cdist
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
+from geopy.distance import geodesic
 
 def create_grid(river_shapes, data_shapes, col_municipal='NAME', col_geometry='geometry', dimension=2):
     """Creates the cell grid for the desired area
@@ -263,13 +268,14 @@ def encode_cyclical(dataframe, col, max_val):
 
     return dataframe
 
-def dataset_mamoth_preparation(dataframe, columns, del_months = None, month_col = 'month'):
+def dataset_mamoth_preparation(dataframe, columns, del_months = None, month_col = 'month', mean_lst = True):
 
     dataset_mamoth = dataframe.copy()
-    dataset_mamoth['lst_jan_mean'] = dataset_mamoth.apply(lambda row: mean([row['lst_jan_day_mean'],row['lst_jan_night_mean']]), axis=1)
-    dataset_mamoth['lst_feb_mean'] = dataset_mamoth.apply(lambda row: mean([row['lst_feb_day_mean'],row['lst_feb_night_mean']]), axis=1)
-    dataset_mamoth['lst_mar_mean'] = dataset_mamoth.apply(lambda row: mean([row['lst_mar_day_mean'],row['lst_mar_night_mean']]), axis=1)
-    dataset_mamoth['lst_apr_mean'] = dataset_mamoth.apply(lambda row: mean([row['lst_apr_day_mean'],row['lst_apr_night_mean']]), axis=1)
+    if mean_lst:
+        dataset_mamoth['lst_jan_mean'] = dataset_mamoth.apply(lambda row: mean([row['lst_jan_day_mean'],row['lst_jan_night_mean']]), axis=1)
+        dataset_mamoth['lst_feb_mean'] = dataset_mamoth.apply(lambda row: mean([row['lst_feb_day_mean'],row['lst_feb_night_mean']]), axis=1)
+        dataset_mamoth['lst_mar_mean'] = dataset_mamoth.apply(lambda row: mean([row['lst_mar_day_mean'],row['lst_mar_night_mean']]), axis=1)
+        dataset_mamoth['lst_apr_mean'] = dataset_mamoth.apply(lambda row: mean([row['lst_apr_day_mean'],row['lst_apr_night_mean']]), axis=1)
     dataset_mamoth['mosq_now'] = 0
 
     if del_months != None:
@@ -310,6 +316,7 @@ def calculate_mosq_previous(dataframe, lau1_col = 'lau1', date_col = 'dt_placeme
             dataframe.at[index_at_dataframe[0], result_col] = mosq_sum
 
     return dataframe
+
 
 def convert_temperature(dataframe, result_col = 'lst'):
     temprature_cols = dataframe.filter(regex='^lst_*').columns.tolist()
@@ -355,3 +362,72 @@ def calculate_nearest_topological(data, topological, neighbors=1):
     del topological['y_rad']
     
     return distances, indices
+
+def calculate_nearest_point_temporal(data, topological, date_col = 'dt_placement', neighbors=1):
+    topological['x_rad'] = np.deg2rad(topological['x'])
+    topological['y_rad'] = np.deg2rad(topological['y'])
+
+    data['x_rad'] = np.deg2rad(data['x'])
+    data['y_rad'] = np.deg2rad(data['y'])
+
+    topological['timestamp'] = topological[date_col].view('int64') // 10**9
+    data['timestamp'] = data[date_col].view('int64') // 10**9
+
+    coordinates_topological = topological[['y_rad', 'x_rad']].values
+    coordinates_data = data[['y_rad', 'x_rad']].values
+
+    distances = cdist(coordinates_data, coordinates_topological, haversine_distance)
+
+    if neighbors > 1:
+        distances = np.mean(distances, axis=1)
+    else:
+        distances = distances[:, 0]
+
+    indices = np.argsort(distances)
+    distances = distances[indices]
+    indices = indices[:neighbors]
+
+    del data['x_rad']
+    del data['y_rad']
+    del data['timestamp']
+    del topological['x_rad']
+    del topological['y_rad']
+    del topological['timestamp']
+
+    return distances.tolist(), indices.tolist()
+
+def haversine_distance(coords1, coords2):
+    lat1, lon1 = coords1
+    lat2, lon2 = coords2
+
+    R = 6371  # Earth's radius in kilometers
+
+    lat1_rad = radians(lat1)
+    lon1_rad = radians(lon1)
+    lat2_rad = radians(lat2)
+    lon2_rad = radians(lon2)
+
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+
+    a = sin(dlat / 2) ** 2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    distance = R * c
+    return distance
+
+def fuzzy_merge(df1, df2, on, date_column, cutoff, scorer, limit=1):
+    df_merged = pd.merge(df1, df2, on=on, how='outer')
+    df_merged['Score'] = df_merged.apply(lambda row: scorer(row[on[0]], row[on[1]]), axis=1)
+    df_merged = df_merged[df_merged['Score'] >= cutoff]
+    df_merged[date_column] = df_merged.apply(lambda row: process.extractOne(row[date_column + '_x'], df2[date_column], scorer=scorer)[0], axis=1)
+    df_merged = df_merged.groupby(df_merged.columns.tolist()).apply(lambda x: x.head(limit))
+    df_merged.reset_index(drop=True, inplace=True)
+    df_merged.drop('Score', axis=1, inplace=True)
+    return df_merged
+
+def compute_distance(row, x1 = 'x1', y1 = 'y1', x2 = 'x2', y2 = 'y2'):
+    start_point = (row[x1], row[y1])
+    end_point = (row[x2], row[y2])
+    distance = geodesic(start_point, end_point).meters
+    return distance
