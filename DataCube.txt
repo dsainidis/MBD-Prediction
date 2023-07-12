@@ -1,0 +1,40 @@
+ssh datacube-epidemics@10.201.40.120 
+DATAcube-Sk
+
+copying files to ssh: scp file.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/file.csv
+
+copying files from ssh: scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/file.csv .
+
+Conda Env: odc
+Scripts Location: /home/datacube-epidemics/Documents/github/noa_epidemics_data/epidemics_data/
+
+My Playground: /home/datacube-epidemics/Documents/sainidis_playground/test_scripts/
+
+Files Location: /home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/
+
+My Files Location: /home/datacube-epidemics/Documents/sainidis_files/new/
+
+Run Script: time python run.py --input-file [in_file] --output-file [out_file] --debug --region region --vectorized
+
+
+Tmux Commands:
+
+tmux new -s mysession
+tmux kill-ses -t mysession
+tmux a -t mysession
+tmux ls
+Ctrl + b d: Detach from session
+
+
+scp IT_Veneto_Timeline_2023-July-1st.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/IT_Veneto_Timeline_2023-July-1st.csv
+scp GR_CMacedonia_Timeline_NUTS3_2010-2022.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/GR_CMacedonia_Timeline_NUTS3_2010-2022.csv
+
+time python run.py --input-file /home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/IT_Veneto_Timeline_2023-July-1st.csv --output-file /home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/IT_Veneto_Timeline_2023-July-1st_filled.csv --debug --region region --vectorized
+
+scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/IT_Veneto_Timeline_2023-July-1st_filled.csv .
+scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/filled_nuts3/GR_CMacedonia_Timeline_NUTS3_2010-2022_filled.csv .
+
+
+
+
+scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/filled_nuts3/meantemps/GR_CMacedonia_Timeline_NUTS3_2010-2022_filled.csv .

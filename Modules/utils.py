@@ -65,10 +65,11 @@ def dataframe_describe(dataframe, year_column = 'year', target_column = 'case'):
         data_train = dataframe.loc[dataframe['year'] != year]
         data_test = dataframe.loc[dataframe['year'] == year]
         try:
-            (counts0, counts1) = data_test['case'].value_counts()
-        except ValueError:
-            counts0 = data_test['case'].value_counts()[0]
+            (counts0, counts1) = data_test[target_column].value_counts()
+        except:
+            counts0 = data_test[target_column].value_counts()[0]
             counts1 = 0
+        
            
         percentage = len(data_test)/len(dataframe)*100
         
@@ -163,7 +164,10 @@ def transform_data(X_train, X_test, y_train, y_test, random_r, nearmiss, smote, 
     
     X_train_inversed = scaler.inverse_transform(X_train)
     X_train_df = pd.DataFrame(X_train_inversed, columns = columns_Xtrain)
-    X_train_df = X_train_df.astype({'day':'int', 'month':'int', 'year':'int'})
+    try:
+        X_train_df = X_train_df.astype({'day':'int', 'month':'int', 'year':'int'})
+    except KeyError:
+        X_train_df = X_train_df.astype({'year':'int'})
 
     indicies_to_remove = []
     for item in exclude_features:
@@ -189,7 +193,7 @@ def calculate_weights(training_set):
     return w0,w1
 
 
-def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_test):
+def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_test, spatial_col = 'lau1', day_col = 'day', month_col = 'month', target_col = 'case'):
 
     import pandas as pd
 
@@ -203,21 +207,25 @@ def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_
     train_df['x'] = data_train['x'].reset_index(drop = True)
     train_df['y'] = data_train['y'].reset_index(drop = True)
     #train_df['municipality'] = data_train['lau1'].reset_index(drop = True)
-    train_df['day'] = data_train['day'].reset_index(drop = True)
-    train_df['month'] = data_train['month'].reset_index(drop = True)
+    if day_col is not None:
+        train_df[day_col] = data_train[day_col].reset_index(drop = True)
+    if month_col is not None:    
+        train_df[month_col] = data_train[month_col].reset_index(drop = True)
     train_df['year'] = data_train['year'].reset_index(drop = True)
-    train_df['case'] = y_train.reset_index(drop = True).astype('int')
+    train_df[target_col] = y_train.reset_index(drop = True).astype('int')
     train_df['probability'] = train_probas[:, 1].tolist()
     train_df.sort_values(by=['probability'], ascending = False, ignore_index = True, inplace = True)
     
     test_df = pd.DataFrame()
     test_df['x'] = data_test['x'].reset_index(drop = True)
     test_df['y'] = data_test['y'].reset_index(drop = True)
-    test_df['municipality'] = data_test['lau1'].reset_index(drop = True)
-    test_df['day'] = data_test['day'].reset_index(drop = True)
-    test_df['month'] = data_test['month'].reset_index(drop = True)
+    test_df[spatial_col] = data_test[spatial_col].reset_index(drop = True)
+    if day_col is not None:
+        test_df[day_col] = data_test[day_col].reset_index(drop = True)
+    if month_col is not None:
+        test_df[month_col] = data_test[month_col].reset_index(drop = True)
     test_df['year'] = data_test['year'].reset_index(drop = True)
-    test_df['case'] = y_test.reset_index(drop = True).astype('int')
+    test_df[target_col] = y_test.reset_index(drop = True).astype('int')
     test_df['probability'] = test_probas[:, 1].tolist()
     test_df.sort_values(by=['probability'], ascending = False, ignore_index = True, inplace = True)
     
@@ -288,20 +296,20 @@ def plot_trend_curve(results, cases = None, plot_min = False, plot_max = False, 
     plt.legend(prop={'size': legend_size})
     plt.show()
 
-def plot_probability_curve(results, x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
+def plot_probability_curve(results, target_col = 'case', x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
     
     import math
     import numpy as np
     import matplotlib.pyplot as plt
     
     results.sort_values(by=['probability'], ascending = False, ignore_index = True, inplace = True)
-    (non_case, case) = results['case'].value_counts()
+    (non_case, case) = results[target_col].value_counts()
     factor = math.floor((non_case/case)/10)*10
     
-    results_norm = results.append([results[results['case'] == 1]] * factor, ignore_index=True)
+    results_norm = results.append([results[results[target_col] == 1]] * factor, ignore_index=True)
 
     x = np.array(results_norm['probability'])
-    y = np.array(results_norm['case']).astype(int)
+    y = np.array(results_norm[target_col]).astype(int)
     a, b = np.polyfit(x, y, 1)
     
     plt.figure(num = None, figsize = figure_size, facecolor='w', edgecolor='b')
@@ -317,14 +325,14 @@ def plot_probability_curve(results, x_label = 'Probability', y_label = 'Ground T
     plt.show()
 
 
-def plot_roc_curve(results, plot_gmean = False, model_name = 'Logistic Regression', x_label = 'False Positive Rate', y_label = 'True Positive Rate', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
+def plot_roc_curve(results, target_col = 'case', plot_gmean = False, model_name = 'Logistic Regression', x_label = 'False Positive Rate', y_label = 'True Positive Rate', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
     
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
     from sklearn.metrics import roc_curve, auc
     
-    y_true = np.array(results['case'], dtype='int64')
+    y_true = np.array(results[target_col], dtype='int64')
     y_prob = np.array(results['probability'])
 
     fpr, tpr, thresholds = roc_curve(y_true, y_prob)
@@ -356,14 +364,14 @@ def plot_roc_curve(results, plot_gmean = False, model_name = 'Logistic Regressio
     plt.show()
 
 
-def plot_pr_curve(results, beta = 2, plot_fbeta = False, model_name = 'Logistic Regression', x_label = 'Recall', y_label = 'Precision', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
+def plot_pr_curve(results, target_col = 'case', beta = 2, plot_fbeta = False, model_name = 'Logistic Regression', x_label = 'Recall', y_label = 'Precision', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
     
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
     from sklearn.metrics import precision_recall_curve, auc
     
-    y_true = np.array(results['case'], dtype='int64')
+    y_true = np.array(results[target_col], dtype='int64')
     y_prob = np.array(results['probability'])
 
     precision, recall, thresholds = precision_recall_curve(y_true, y_prob)

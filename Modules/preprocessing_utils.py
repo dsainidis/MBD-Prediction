@@ -240,13 +240,18 @@ def fillna(dataframe,fill_list):
             dataframe[i] = dataframe[i].fillna(fill_list[i])
     return dataframe
 
-def describe_dataframe(dataframe):
+def describe_dataframe(dataframe, rounding_factor = 4, remove_zeros = False):
     df_desc = pd.DataFrame(columns=['Column', 'Missing'])
 
     for col in dataframe.columns:
-        df_desc = df_desc.append({'Column': col, 
-                                'Missing': (dataframe[col].isnull().sum() * 100 / len(dataframe[col]))}, ignore_index = True)
+        missing_percentage = dataframe[col].isnull().sum() * 100 / len(dataframe[col])
     
+        df_desc = df_desc.append({'Column': col, 
+                                'Missing': round(missing_percentage, rounding_factor)}, ignore_index = True)
+        
+        if remove_zeros:
+            df_desc = df_desc[df_desc["Missing"] != 0]
+
     return df_desc
 
 def lau1_mapping(dataframe, x0, y0, lau1_col = 'lau1', map_col = 'lau1_id', dist_col = 'eq_distance'):
