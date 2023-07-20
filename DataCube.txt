@@ -26,15 +26,17 @@ tmux ls
 Ctrl + b d: Detach from session
 
 
-scp IT_Veneto_Timeline_2023-July-1st.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/IT_Veneto_Timeline_2023-July-1st.csv
+scp GR_Attica_Timeline_2023-July-2nd.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/GR_Attica_Timeline_2023-July-2nd.csv
 scp GR_CMacedonia_Timeline_NUTS3_2010-2022.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/GR_CMacedonia_Timeline_NUTS3_2010-2022.csv
 
-time python run.py --input-file /home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/IT_Veneto_Timeline_2023-July-1st.csv --output-file /home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/IT_Veneto_Timeline_2023-July-1st_filled.csv --debug --region region --vectorized
+time python run.py --input-file /home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/GR_Thessaly_Timeline_2023-July-2nd.csv --output-file /home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/GR_Thessaly_Timeline_2023-July-2nd_filled.csv --debug --region region --vectorized
 
-scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/IT_Veneto_Timeline_2023-July-1st_filled.csv .
+scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/beyond_epidemics/epidemiological_data/greece/entomological/output/temp/GR_Thessaly_Timeline_2023-July-2nd_filled.csv .
 scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/filled_nuts3/GR_CMacedonia_Timeline_NUTS3_2010-2022_filled.csv .
 
 
 
 
 scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/filled_nuts3/meantemps/GR_CMacedonia_Timeline_NUTS3_2010-2022_filled.csv .
+
+scp GR_Thessaly_Timeline_NUTS3_2010-2022.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/GR_Thessaly_Timeline_NUTS3_2010-2022.csv
