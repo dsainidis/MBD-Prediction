@@ -213,8 +213,8 @@ def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_
         train_df[month_col] = data_train[month_col].reset_index(drop = True)
     train_df['year'] = data_train['year'].reset_index(drop = True)
     train_df[target_col] = y_train.reset_index(drop = True).astype('int')
-    train_df['probability'] = train_probas[:, 1].tolist()
-    train_df.sort_values(by=['probability'], ascending = False, ignore_index = True, inplace = True)
+    train_df['score'] = train_probas[:, 1].tolist()
+    train_df.sort_values(by=['score'], ascending = False, ignore_index = True, inplace = True)
     
     test_df = pd.DataFrame()
     test_df['x'] = data_test['x'].reset_index(drop = True)
@@ -226,8 +226,8 @@ def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_
         test_df[month_col] = data_test[month_col].reset_index(drop = True)
     test_df['year'] = data_test['year'].reset_index(drop = True)
     test_df[target_col] = y_test.reset_index(drop = True).astype('int')
-    test_df['probability'] = test_probas[:, 1].tolist()
-    test_df.sort_values(by=['probability'], ascending = False, ignore_index = True, inplace = True)
+    test_df['score'] = test_probas[:, 1].tolist()
+    test_df.sort_values(by=['score'], ascending = False, ignore_index = True, inplace = True)
     
     return train_df, test_df, model_coef
 

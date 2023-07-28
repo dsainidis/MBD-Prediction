@@ -40,3 +40,8 @@ scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis
 scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/filled_nuts3/meantemps/GR_CMacedonia_Timeline_NUTS3_2010-2022_filled.csv .
 
 scp GR_Thessaly_Timeline_NUTS3_2010-2022.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/new/GR_Thessaly_Timeline_NUTS3_2010-2022.csv
+
+
+
+--ARGIRO
+scp CM_previous.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/temporary/CM_previous.csv

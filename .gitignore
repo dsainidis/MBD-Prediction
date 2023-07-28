@@ -1,4 +1,11 @@
 Greece/data/wnv_cases_original/password.txt
+
+DataCube.txt
+Notebooks Description.txt
+
+/.venv
+/.vscode
+
 *.xlsx
 *.csv
 *.png
@@ -7,3 +14,4 @@ Greece/data/wnv_cases_original/password.txt
 *.prj
 *.shp
 *.shx
+*.lock
