@@ -296,19 +296,19 @@ def plot_trend_curve(results, score_col = 'probability', cases = None, plot_min 
     plt.legend(prop={'size': legend_size})
     plt.show()
 
-def plot_probability_curve(results, target_col = 'case', x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
+def plot_probability_curve(results, score_column = 'score', target_col = 'case', x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
     
     import math
     import numpy as np
     import matplotlib.pyplot as plt
     
-    results.sort_values(by=['probability'], ascending = False, ignore_index = True, inplace = True)
+    results.sort_values(by=[score_column], ascending = False, ignore_index = True, inplace = True)
     (non_case, case) = results[target_col].value_counts()
     factor = math.floor((non_case/case)/10)*10
     
     results_norm = results.append([results[results[target_col] == 1]] * factor, ignore_index=True)
 
-    x = np.array(results_norm['probability'])
+    x = np.array(results_norm[score_column])
     y = np.array(results_norm[target_col]).astype(int)
     a, b = np.polyfit(x, y, 1)
     
