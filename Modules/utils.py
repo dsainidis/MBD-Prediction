@@ -257,7 +257,7 @@ def plot_feature_importance(model_weights, feature_names, top = 0, title = None,
     plt.ylabel(y_label, size = label_size)
 
 
-def plot_trend_curve(results, cases = None, plot_min = False, plot_max = False, plot_avg = True, plot_cases = True, x_label = 'Year', y_label = 'Average Probability', tick_size = 14, label_size = 18, legend_size = 18, text_size = 12, figure_size = (8, 6)):
+def plot_trend_curve(results, score_col = 'probability', cases = None, plot_min = False, plot_max = False, plot_avg = True, plot_cases = True, x_label = 'Year', y_label = 'Average Probability', tick_size = 14, label_size = 18, legend_size = 18, text_size = 12, figure_size = (8, 6)):
     import numpy as np
     import matplotlib.pyplot as plt
     
@@ -270,20 +270,20 @@ def plot_trend_curve(results, cases = None, plot_min = False, plot_max = False, 
 
     for year in results['year'].drop_duplicates().sort_values():
         years.append(year)
-        p_min.append(results[results['year'] == year]['probability'].min())
-        p_avg.append(results[results['year'] == year]['probability'].mean())
-        p_max.append(results[results['year'] == year]['probability'].max())  
+        p_min.append(results[results['year'] == year][score_col].min())
+        p_avg.append(results[results['year'] == year][score_col].mean())
+        p_max.append(results[results['year'] == year][score_col].max())  
 
     plt.figure(num = None, figsize = figure_size, dpi = 100, facecolor='w', edgecolor='b')
     
     if plot_min:
-        plt.plot(years, p_min, 'green', label='P min')
+        plt.plot(years, p_min, 'green', label='Min Risk')
         
     if plot_max:
-        plt.plot(years, p_max, 'red', label='P max')
+        plt.plot(years, p_max, 'red', label='Max Risk')
         
     if plot_avg:
-        plt.plot(years, p_avg, 'blue', label='P Avg')
+        plt.plot(years, p_avg, 'blue', label='Avg Risk')
 
     if plot_cases:    
         plt.plot(years, cases_norm, 'black', label='Cases')
