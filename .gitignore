@@ -15,3 +15,6 @@ Notebooks Description.txt
 *.shp
 *.shx
 *.lock
+*.pt
+*.pkl
+*.pth
