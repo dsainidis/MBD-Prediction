@@ -233,6 +233,27 @@ def predict_lin_model(trained_model, data_train, data_test, X_train, y_train, X_
     
     return train_df, test_df, model_coef
 
+def inference_lin_model(trained_model, data_test, X_test, y_test, spatial_col = 'lau1', day_col = 'day', month_col = 'month', year_col = 'year', score_col = 'score', target_col = 'case'):
+    import pandas as pd
+
+    test_probas = trained_model.predict_proba(X_test)
+    
+
+    test_df = pd.DataFrame()
+    test_df['x'] = data_test['x'].reset_index(drop = True)
+    test_df['y'] = data_test['y'].reset_index(drop = True)
+    test_df[spatial_col] = data_test[spatial_col].reset_index(drop = True)
+    if day_col is not None:
+        test_df[day_col] = data_test[day_col].reset_index(drop = True)
+    if month_col is not None:
+        test_df[month_col] = data_test[month_col].reset_index(drop = True)
+    test_df[year_col] = data_test[year_col].reset_index(drop = True)
+    test_df[target_col] = y_test.reset_index(drop = True).astype('int')
+    test_df[score_col] = test_probas[:, 1].tolist()
+    test_df.sort_values(by=[score_col], ascending = False, ignore_index = True, inplace = True)
+    
+    return test_df
+
 def train_and_predict(model, data_train, data_test, X_train, y_train, X_test, y_test, spatial_col = 'lau1', day_col = 'day', month_col = 'month', target_col = 'case'):
 
     import pandas as pd
