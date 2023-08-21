@@ -25,13 +25,13 @@ tmux a -t mysession
 tmux ls
 Ctrl + b d: Detach from session
 
-time python run.py --input-file /home/datacube-epidemics/Documents/sainidis_files/GR_Attica_Timeline_2023-May-1st.csv --debug --region region --vectorized
+time python run.py --input-file /home/datacube-epidemics/Documents/sainidis_files/GR_CMacedonia_Timeline_2023-May-1st.csv --debug --region region --vectorized
 
 
-scp GR_CMacedonia_Timeline_2023-May-2nd.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/GR_CMacedonia_Timeline_2023-May-2nd.csv
+scp GR_CMacedonia_Timeline_2023-August-1st.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/GR_CMacedonia_Timeline_2023-August-1st.csv
 
 
-scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/filled_2023/GR_Attica_Timeline_2023-May-1st_filled.csv .
+scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/filled_2023/GR_CMacedonia_Timeline_2023-May-1st_filled.csv .
 
 
 --ARGIRO
