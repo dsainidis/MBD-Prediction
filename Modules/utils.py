@@ -179,7 +179,7 @@ def transform_data(X_train, X_test, y_train, y_test, random_r, nearmiss, smote, 
         X_train = np.delete(X_train, index, axis=1)
         X_test = np.delete(X_test, index, axis=1)
         
-    return X_train, X_test, y_train, y_test, X_train_df, scaler, imputer, nm, sm
+    return X_train, X_test, y_train, y_test, X_train_df, scaler, imputer
 
 def calculate_weights(training_set):
     import math
