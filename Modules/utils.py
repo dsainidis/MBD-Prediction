@@ -32,10 +32,14 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     import matplotlib.pyplot as plt
     
     value_counts = dataframe[target_column].value_counts().values
+
+    value_counts = dataframe[target_column].value_counts()
+    counts0 = value_counts.get(key = 0) if value_counts.get(key = 0) is not None else 0
+    counts1 = value_counts.get(key = 1) if value_counts.get(key = 1) is not None else 0
     
     fig, ax = plt.subplots(figsize = figure_size)
     
-    x_max = math.ceil(max(value_counts) + (max(value_counts) * .1))
+    x_max = math.ceil(max(counts0, counts1) + (max(counts0, counts1) * .1))
     step = round(math.ceil(x_max * .1) / 1000) * 1000
     if step == 0:
         step = 500
@@ -45,12 +49,11 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     plt.xticks(np.arange(0, x_max, step = step), size = tick_size, rotation = 45)
     plt.xlim([0, x_max])
     
-    big_index = np.argmax(value_counts)
-    imbalance = math.ceil((value_counts/min(value_counts))[big_index])
+    imbalance = math.ceil(max(counts0, counts1)/min(counts0, counts1))
     
-    plt.text(value_counts[big_index] - (max(value_counts) * .15), .9, f'imbalance ~ {imbalance}:1', size=text_size)
+    plt.text(max(counts0, counts1) - (max(counts0, counts1) * .15), .45, f'imbalance ~ {imbalance}:1', size=text_size)
     
-    bars = ax.barh(y_label, value_counts)
+    bars = ax.barh(y_label, (counts0, counts1))
     ax.bar_label(bars, label_type= 'edge', size = text_size)
     plt.show()
 
@@ -62,14 +65,12 @@ def dataframe_describe(dataframe, year_column = 'year', target_column = 'case'):
     result = pd.DataFrame(columns = ['year', 'non-case', 'case', 'total', 'percentage'])
     
     for year in dataframe[year_column].drop_duplicates().sort_values():
-        data_train = dataframe.loc[dataframe['year'] != year]
-        data_test = dataframe.loc[dataframe['year'] == year]
-        try:
-            (counts0, counts1) = data_test[target_column].value_counts()
-        except:
-            counts0 = data_test[target_column].value_counts()[0]
-            counts1 = 0
-        
+        data_test = dataframe.loc[dataframe[year_column] == year]
+    
+        case_values = data_test[target_column].value_counts()
+        counts0 = case_values.get(key = 0) if case_values.get(key = 0) is not None else 0
+        counts1 = case_values.get(key = 1) if case_values.get(key = 1) is not None else 0
+
            
         percentage = len(data_test)/len(dataframe)*100
         
@@ -181,6 +182,97 @@ def transform_data(X_train, X_test, y_train, y_test, random_r, nearmiss, smote, 
         
     return X_train, X_test, y_train, y_test, X_train_df, scaler, imputer
 
+def transform_data_new(X_train, X_test, y_train, y_test, random_r, nearmiss, smote, scaler_key = 'minmax', majority_class = 0, exclude_features = []):
+    
+    import math
+    import random
+    import pandas as pd
+    import numpy as np
+    from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler
+    from sklearn.impute import KNNImputer
+    from imblearn.under_sampling import NearMiss 
+    from imblearn.over_sampling import BorderlineSMOTE
+    
+    scalers = {'minmax': MinMaxScaler(),
+               'standard': StandardScaler(),
+               'robust': RobustScaler(),
+               'abs': MaxAbsScaler()}
+
+    columns_Xtrain = X_train.columns
+    
+    if(random_r != 0):
+        nan_index = []
+        target_index = []
+        
+        for feature, row in X_train.iterrows():
+            if row.isnull().values.any():
+                nan_index.append(feature)
+                if y_train.iloc[feature] == majority_class:
+                    target_index.append(feature)
+            
+        nan_set = set(nan_index)
+        zero_set = set(target_index)
+        
+        intersection = list(nan_set.intersection(zero_set))
+        sampling_size = math.ceil(len(intersection) * random_r)
+        removed = random.sample(intersection, sampling_size)
+        
+        X_train = X_train.drop(index = removed, axis = 1)
+        y_train = y_train.drop(index = removed, axis = 1)
+    
+    
+    scaler = scalers.get(scaler_key, MinMaxScaler())
+    scaler.fit(X_train)
+    X_train = scaler.transform(X_train)
+    X_test = scaler.transform(X_test)
+        
+    imputer = KNNImputer()
+    imputer.fit(X_train)
+    X_train = imputer.transform(X_train)
+    X_test = imputer.transform(X_test)
+
+    y_train_value_counts = y_train.value_counts()
+    class_0_counts = y_train_value_counts.get(key = 0) if y_train_value_counts.get(key = 0) is not None else 0
+    class_1_counts = y_train_value_counts.get(key = 1) if y_train_value_counts.get(key = 1) is not None else 0
+     
+    if (nearmiss != 0):
+
+        if majority_class == 0:
+            nm = NearMiss(sampling_strategy = {0: math.ceil(class_0_counts * (1 - nearmiss)), 1: class_1_counts}, version = 1, n_jobs = -1)
+        elif majority_class == 1:
+            nm = NearMiss(sampling_strategy = {0: class_0_counts, 1: math.ceil(class_1_counts * (1 - nearmiss))}, version = 1, n_jobs = -1)
+
+        X_train, y_train = nm.fit_resample(X_train, y_train)
+    
+    if (smote != 0):
+        y_train_value_counts = y_train.value_counts()
+        class_0_counts = y_train_value_counts.get(key = 0) if y_train_value_counts.get(key = 0) is not None else 0
+        class_1_counts = y_train_value_counts.get(key = 1) if y_train_value_counts.get(key = 1) is not None else 0
+        
+        if majority_class == 0:
+            sm = BorderlineSMOTE(sampling_strategy = {0: class_0_counts, 1: math.ceil(class_1_counts * (1 + smote))}, n_jobs = -1, random_state = 0)
+        elif majority_class == 1:
+            sm = BorderlineSMOTE(sampling_strategy = {0: math.ceil(class_0_counts * (1 + smote)), 1: class_1_counts}, n_jobs = -1, random_state = 0)
+
+        X_train, y_train = sm.fit_resample(X_train, y_train)
+    
+    X_train_inversed = scaler.inverse_transform(X_train)
+    X_train_df = pd.DataFrame(X_train_inversed, columns = columns_Xtrain)
+    try:
+        X_train_df = X_train_df.astype({'day':'int', 'month':'int', 'year':'int'})
+    except KeyError:
+        X_train_df = X_train_df.astype({'year':'int'})
+
+    features_to_remove = []
+    for item in exclude_features:
+        features_to_remove.append(columns_Xtrain.get_loc(item))
+
+    for feature in features_to_remove:
+        X_train = np.delete(X_train, feature, axis=1)
+        X_test = np.delete(X_test, feature, axis=1)
+        
+    return X_train, X_test, y_train, y_test, X_train_df, scaler, imputer
+
 def calculate_weights(training_set):
     import math
     
@@ -190,6 +282,28 @@ def calculate_weights(training_set):
         w1 = math.ceil(non_cases/cases)
     except ZeroDivisionError:
         w1 = 10
+        
+    return w0,w1
+
+def calculate_weights_new(training_set):
+    import math
+
+    value_counts = training_set.value_counts()
+    non_cases = value_counts.get(key = 0) if value_counts.get(key = 0) is not None else 0
+    cases = value_counts.get(key = 1) if value_counts.get(key = 1) is not None else 0
+    
+    if non_cases >= cases:
+        w0 = 1
+        try:
+            w1 = math.ceil(non_cases/cases)
+        except ZeroDivisionError:
+            w1 = 10
+    else:
+        w1 = 1
+        try:
+            w0 = math.ceil(cases/non_cases)
+        except ZeroDivisionError:
+            w0 = 10
         
     return w0,w1
 
