@@ -89,9 +89,13 @@ def yearCV_split(dataframe, exclude_years_train = [], year_column = 'year', targ
     years_sorted = dataframe[year_column].drop_duplicates().sort_values()
     
     for year in years_sorted:
-        data_train = dataframe.loc[dataframe[year_column] != year]
-        if len(exclude_years_train) > 0:
-             data_train = data_train.loc[~data_train[year_column].isin(exclude_years_train)]
+
+        data_train = dataframe.loc[~dataframe[year_column].isin([year]+exclude_years_train)]
+
+        # data_train = dataframe.loc[dataframe[year_column] != year]
+        # if len(exclude_years_train) > 0:
+        #      data_train = data_train.loc[~data_train[year_column].isin(exclude_years_train)]
+
         data_test = dataframe.loc[dataframe[year_column] == year]
         data_test = data_test.drop_duplicates(keep='first')
         
@@ -273,6 +277,75 @@ def transform_data_new(X_train, X_test, y_train, y_test, random_r, nearmiss, smo
         
     return X_train, X_test, y_train, y_test, X_train_df, scaler, imputer
 
+def train_test_split_transform(data_train, data_test, nearmiss, smote, target_col = 'case', scaler_key = 'minmax', majority_class = 0, exclude_features = []):
+    
+    import math
+    import random
+    import pandas as pd
+    import numpy as np
+    from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler
+    from sklearn.impute import KNNImputer
+    from imblearn.under_sampling import NearMiss 
+    from imblearn.over_sampling import BorderlineSMOTE
+    
+    scalers = {'minmax': MinMaxScaler(),
+               'standard': StandardScaler(),
+               'robust': RobustScaler(),
+               'abs': MaxAbsScaler()}
+
+    object_cols = data_train.select_dtypes(include=['object']).columns.to_list()
+    removed_cols = exclude_features
+
+    X_train = data_train.drop(columns = [target_col] + object_cols + removed_cols)
+    y_train = data_train[target_col]
+    X_test = data_test.drop(columns = [target_col] + object_cols + removed_cols)
+    y_test = data_test[target_col]
+
+    scaler = scalers.get(scaler_key, MinMaxScaler())
+    scaler.fit(X_train)
+    X_train_scaled = scaler.transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+        
+    imputer = KNNImputer()
+    imputer.fit(X_train)
+    X_train_imputed = imputer.transform(X_train_scaled)
+    X_test_imputed = imputer.transform(X_test_scaled)
+
+    y_train_value_counts = y_train.value_counts()
+    class_0_counts = y_train_value_counts.get(key = 0) if y_train_value_counts.get(key = 0) is not None else 0
+    class_1_counts = y_train_value_counts.get(key = 1) if y_train_value_counts.get(key = 1) is not None else 0
+        
+    if (nearmiss != 0):
+        if majority_class == 0:
+            nm = NearMiss(sampling_strategy = {0: math.ceil(class_0_counts * (1 - nearmiss)), 1: class_1_counts}, version = 1, n_jobs = -1)
+        elif majority_class == 1:
+            nm = NearMiss(sampling_strategy = {0: class_0_counts, 1: math.ceil(class_1_counts * (1 - nearmiss))}, version = 1, n_jobs = -1)
+
+        X_train_resampled, y_train_resampled = nm.fit_resample(X_train_imputed, y_train)
+
+        y_train_value_counts = y_train_resampled.value_counts()
+        class_0_counts = y_train_value_counts.get(key = 0) if y_train_value_counts.get(key = 0) is not None else 0
+        class_1_counts = y_train_value_counts.get(key = 1) if y_train_value_counts.get(key = 1) is not None else 0
+        
+
+    if (smote != 0):
+        if majority_class == 0:
+            sm = BorderlineSMOTE(sampling_strategy = {0: class_0_counts, 1: math.ceil(class_1_counts * (1 + smote))}, n_jobs = -1, random_state = 0)
+        elif majority_class == 1:
+            sm = BorderlineSMOTE(sampling_strategy = {0: math.ceil(class_0_counts * (1 + smote)), 1: class_1_counts}, n_jobs = -1, random_state = 0)
+
+        if (nearmiss != 0):
+            X_train_resampled, y_train_resampled = sm.fit_resample(X_train_resampled, y_train_resampled)
+        else:
+            X_train_resampled, y_train_resampled = sm.fit_resample(X_train_imputed, y_train)
+
+    X_train_returned = X_train_imputed if (nearmiss == 0 and smote == 0) else X_train_resampled
+    y_train_returned = y_train if (nearmiss == 0 and smote == 0) else y_train_resampled
+    X_test_returned = X_test_imputed
+    y_test_returned = y_test
+        
+    return X_train_returned, X_test_returned, y_train_returned, y_test_returned, scaler, imputer
+
 def calculate_weights(training_set):
     import math
     
@@ -285,7 +358,7 @@ def calculate_weights(training_set):
         
     return w0,w1
 
-def calculate_weights_new(training_set):
+def calculate_weights_new(training_set, multiplier = 1):
     import math
 
     value_counts = training_set.value_counts()
@@ -298,19 +371,60 @@ def calculate_weights_new(training_set):
             w1 = math.ceil(non_cases/cases)
         except ZeroDivisionError:
             w1 = 10
+        w1 = w1 * multiplier
     else:
         w1 = 1
         try:
             w0 = math.ceil(cases/non_cases)
         except ZeroDivisionError:
             w0 = 10
+        w0 = w0 * multiplier
         
     return w0,w1
 
-def train_lin_model(model, X_train, y_train):
+def train_lin_model(model, X_train, y_train, explain = False):
+    import shap
+
     model.fit(X_train, y_train)
 
-    return model
+    if explain:
+        masker = shap.maskers.Independent(data = X_train)
+        explainer = shap.LinearExplainer(model, masker = masker)
+        shap_values = explainer.shap_values(X_train)
+        return model, shap_values
+    else:
+        return model
+
+def predict_lin_model_new(trained_model, X_train, y_train, X_test, y_test, data_test, spatial_col = 'lau1', day_col = 'day', month_col = 'month', year_col = 'year', score_col = 'score', target_col = 'case'):
+    import pandas as pd
+    import numpy as np
+
+    data_train_unique = np.unique(np.concatenate((X_train, y_train.to_numpy().reshape(-1, 1)), axis=1), axis = 0)
+
+    X_train_unique = data_train_unique[:, :-1]
+    y_train_unique = data_train_unique[:, -1:]
+
+    train_probas = trained_model.predict_proba(X_train_unique)
+    test_probas = trained_model.predict_proba(X_test)
+    model_coef = trained_model.coef_
+
+    train_result = pd.DataFrame()
+    train_result[target_col] = pd.Series(y_train_unique.squeeze()).astype('int')
+    train_result[score_col] = train_probas[:, 1].tolist()
+    train_result.sort_values(by=[score_col], ascending = False, ignore_index = True, inplace = True)
+    
+    test_result = pd.DataFrame()
+    test_result[spatial_col] = data_test[spatial_col].reset_index(drop = True)
+    if day_col is not None:
+        test_result[day_col] = data_test[day_col].reset_index(drop = True)
+    if month_col is not None:
+        test_result[month_col] = data_test[month_col].reset_index(drop = True)
+    test_result[year_col] = data_test[year_col].reset_index(drop = True)
+    test_result[target_col] = y_test.reset_index(drop = True).astype('int')
+    test_result[score_col] = test_probas[:, 1].tolist()
+    test_result.sort_values(by=[score_col], ascending = False, ignore_index = True, inplace = True)
+
+    return train_result, test_result, model_coef
 
 def predict_lin_model(trained_model, data_train, data_test, X_train, y_train, X_test, y_test, spatial_col = 'lau1', day_col = 'day', month_col = 'month', year_col = 'year', score_col = 'score', target_col = 'case'):
     import pandas as pd
@@ -431,6 +545,8 @@ def plot_feature_importance(model_weights, feature_names, top = 0, title = None,
     plt.xlabel(x_label, size = label_size)
     plt.ylabel(y_label, size = label_size)
 
+    return weights_df
+
 
 def plot_trend_curve(results, score_col = 'score', cases = None, plot_min = False, plot_max = False, plot_avg = True, plot_cases = True, x_label = 'Year', y_label = 'Average Probability', tick_size = 14, label_size = 18, legend_size = 18, text_size = 12, figure_size = (8, 6)):
     import numpy as np
@@ -452,18 +568,18 @@ def plot_trend_curve(results, score_col = 'score', cases = None, plot_min = Fals
     plt.figure(num = None, figsize = figure_size, dpi = 100, facecolor='w', edgecolor='b')
     
     if plot_min:
-        plt.plot(years, p_min, 'green', label='Min Risk')
+        plt.plot(years, p_min, 'green', label='Min Score')
         
     if plot_max:
-        plt.plot(years, p_max, 'red', label='Max Risk')
+        plt.plot(years, p_max, 'red', label='Max Score')
         
     if plot_avg:
-        plt.plot(years, p_avg, 'blue', label='Avg Risk')
+        plt.plot(years, p_avg, 'blue', label='Avg Score')
 
     if plot_cases:    
-        plt.plot(years, cases_norm, 'black', label='Cases')
+        plt.plot(years, cases_norm, 'black', label='Cases (normalized)')
     
-    plt.xticks(np.arange(min(years), max(years)+1), size = tick_size, rotation=45)
+    plt.xticks(np.arange(min(years), max(years)+1), size = tick_size, rotation=20)
     plt.yticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
     plt.xlabel(x_label, size = label_size)
     plt.ylabel(y_label, size = label_size)
@@ -485,19 +601,25 @@ def plot_probability_curve(results, score_column = 'score', target_col = 'case',
 
     x = np.array(results_norm[score_column])
     y = np.array(results_norm[target_col]).astype(int)
-    a, b = np.polyfit(x, y, 1)
+    slope, intercept = np.polyfit(x, y, 1)
+
+    line = slope*x+intercept
+    # mask = line <= 1
+    # line_plot = line[mask]
     
     plt.figure(num = None, figsize = figure_size, facecolor='w', edgecolor='b')
-    plt.scatter(x, y, color='purple', s=0.5)
-    plt.plot(x, a*x+b, color='steelblue', linestyle='--', linewidth=2)
+    plt.scatter(x, y, color='purple', s=0.15, marker='*')
+    plt.plot(x, line, color='steelblue', linestyle='--', linewidth=2)
     plt.yticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
     plt.xticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
     plt.xlabel(x_label, size = label_size)
     plt.ylabel(y_label, size = label_size)
     plt.ylim([-0.05,1.05])
     plt.grid(True)
-    plt.text(0.61, 0.13, 'y = ' + '{:.2f}'.format(b) + ' + {:.2f}'.format(a) + 'x', size = text_size)
+    plt.text(0.61, 0.13, 'y = ' + '{:.2f}'.format(intercept) + ' + {:.2f}'.format(slope) + 'x', size = text_size)
     plt.show()
+
+    return intercept, slope
 
 
 def plot_roc_curve(results, score_col = 'score', target_col = 'case', plot_gmean = False, model_name = 'Logistic Regression', x_label = 'False Positive Rate', y_label = 'True Positive Rate', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
@@ -537,6 +659,8 @@ def plot_roc_curve(results, score_col = 'score', target_col = 'case', plot_gmean
     plt.ylim([-0.05,1.05])
     plt.legend(prop={'size': legend_size})
     plt.show()
+
+    return optimal_fpr, optimal_tpr, optimal_threshold_roc, optimal_gmean
 
 
 def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, plot_fbeta = False, model_name = 'Logistic Regression', x_label = 'Recall', y_label = 'Precision', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
@@ -580,7 +704,7 @@ def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, p
     optimal_precision = round(precision[index], ndigits = 2)
 
     plt.subplots(1, figsize=figure_size)
-    plt.plot(recall, precision, color = 'purple', label = model_name)
+    plt.plot(recall, precision, color = 'steelblue', label = model_name)
     plt.plot([baseline, baseline], ls="--", color = 'orange', label = 'baseline')
     if plot_fbeta:
         plt.plot(optimal_recall, optimal_precision, marker='o', markersize = 10, color = 'red', label = f'threshold={optimal_threshold_pr}')
@@ -594,6 +718,8 @@ def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, p
     plt.ylim([-0.05,1.05])
     plt.legend(prop={'size': legend_size})
     plt.show()
+
+    return optimal_recall, optimal_precision, optimal_threshold_pr, optimal_fbeta
 
 
 def evaluate_operational(results, k, score_col = 'score', target_col = 'case', prob_threshold = -1, ouput_random = False, sampling_number = 10):
@@ -711,6 +837,105 @@ def operational_year(data, year):
     out = data.loc[data['Prediction Date'].str.endswith(str(year))]
     print(out)
 
+def classification_report_new(results_train, results_test, score_col = 'score', target_col = 'case', threshold = 0.5, beta = 1, round_factor = 4):
+    
+    import numpy as np
+    import pandas as pd
+    from sklearn.metrics import balanced_accuracy_score, precision_score, recall_score, fbeta_score, log_loss, confusion_matrix 
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning)
+    
+    years = np.sort(results_test['year'].unique())
+    
+    report_train = pd.DataFrame()
+    report_test = pd.DataFrame()
+    
+    fbeta_label = f'F{beta} Score'
+
+    #metrics on training set
+    probabilities_train = results_train[score_col]
+    y_train = results_train[target_col].values.astype(int)
+    predictions_train = np.where(probabilities_train > threshold, 1, 0)
+        
+    bal_acc_train = balanced_accuracy_score(y_train, predictions_train)
+    precision_train = precision_score(y_train, predictions_train, labels = [0,1], zero_division = 0)
+    recall_train = recall_score(y_train, predictions_train, labels = [0,1], zero_division = 0)
+    fb_score_train = fbeta_score(y_train, predictions_train, beta = beta, labels = [0,1], zero_division = 0)
+    try:
+        log_loss_train = log_loss(y_train, probabilities_train, labels = [0,1])
+    except ValueError:
+        log_loss_train = 0
+        
+    report_train = report_train.append({'Accuracy': round(bal_acc_train, round_factor),
+                                        'Precision': round(precision_train, round_factor),
+                                        'Recall': round(recall_train, round_factor), 
+                                        fbeta_label : round(fb_score_train, round_factor),
+                                        'Loss' : round(log_loss_train, round_factor)}, ignore_index = True)
+    
+    for year in years:
+        #metrics on test set
+        probabilities_test = results_test.loc[results_test['year'] == year][score_col]
+        y_test = results_test.loc[results_test['year'] == year][target_col].values.astype(int)
+        _, counts = np.unique(y_test, return_counts=True)
+        if (len(counts) == 2):
+            infected = counts[1]
+        else:
+            infected = 0
+            
+        predictions_test = np.where(probabilities_test > threshold, 1, 0)
+        
+        cm = confusion_matrix(y_test, predictions_test, labels=[0, 1])
+        tn, fp, fn, tp = cm.ravel()
+        positive_rate = (fp+tp) / (tp + fn + fp + tn)
+    
+        bal_acc_test = balanced_accuracy_score(y_test, predictions_test)
+        precision_test = precision_score(y_test, predictions_test, labels = [0,1], zero_division = 0)
+        recall_test = recall_score(y_test, predictions_test, labels = [0,1], zero_division = 0)
+        fb_score_test = fbeta_score(y_test, predictions_test, beta = beta, labels = [0,1], zero_division = 0)
+        log_loss_test = log_loss(y_test, probabilities_test, labels = [0,1])
+        
+        report_test = report_test.append({'Year': f'{year}'.split('.')[0],
+                                          'Infected': infected,
+                                          'Positive Rate': round(positive_rate, round_factor),
+                                          'Accuracy': round(bal_acc_test, round_factor),
+                                          'Precision': round(precision_test, round_factor),
+                                          'Recall': round(recall_test, round_factor), 
+                                          fbeta_label : round(fb_score_test, round_factor),
+                                          'Loss' : round(log_loss_test, round_factor)}, ignore_index = True)
+        
+    # report_train = report_train.append({'Year': 'Mean',
+    #                                     'Accuracy': round(report_train["Accuracy"].mean(), round_factor),
+    #                                     'Precision': round(report_train["Precision"].mean(), round_factor),
+    #                                     'Recall': round(report_train["Recall"].mean(), round_factor), 
+    #                                     fbeta_label : round(report_train[fbeta_label].mean(), round_factor),
+    #                                     'Loss' : round(report_train["Loss"].mean(), round_factor)}, ignore_index = True)
+    
+    # report_train = report_train.append({'Year': 'Median',
+    #                                     'Accuracy': round(report_train["Accuracy"].median(), round_factor),
+    #                                     'Precision': round(report_train["Precision"].median(), round_factor),
+    #                                     'Recall': round(report_train["Recall"].median(), round_factor), 
+    #                                     fbeta_label : round(report_train[fbeta_label].median(), round_factor),
+    #                                     'Loss' : round(report_train["Loss"].median(), round_factor)}, ignore_index = True)    
+    
+    report_test = report_test.append({'Year': 'Mean',
+                                      'Infected': round(report_test["Infected"].mean(), round_factor),
+                                      'Positive Rate': round(report_test["Positive Rate"].mean(), round_factor),
+                                      'Accuracy': round(report_test["Accuracy"].mean(), round_factor),
+                                      'Precision': round(report_test["Precision"].mean(), round_factor),
+                                      'Recall': round(report_test["Recall"].mean(), round_factor), 
+                                      fbeta_label : round(report_test[fbeta_label].mean(), round_factor),
+                                      'Loss' : round(report_test["Loss"].mean(), round_factor)}, ignore_index = True)
+
+    report_test = report_test.append({'Year': 'Median',
+                                      'Infected': round(report_test["Infected"].median(), round_factor),
+                                      'Positive Rate': round(report_test["Positive Rate"].median(), round_factor),
+                                      'Accuracy': round(report_test["Accuracy"].median(), round_factor),
+                                      'Precision': round(report_test["Precision"].median(), round_factor),
+                                      'Recall': round(report_test["Recall"].median(), round_factor), 
+                                      fbeta_label : round(report_test[fbeta_label].median(), round_factor),
+                                      'Loss' : round(report_test["Loss"].median(), round_factor)}, ignore_index = True)
+        
+    return report_train, report_test
 
 def classification_report(results_train, results_test, score_col = 'score', target_col = 'case', threshold = 0.5, beta = 1, round_factor = 4):
     
