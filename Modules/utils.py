@@ -49,7 +49,7 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     plt.xticks(np.arange(0, x_max, step = step), size = tick_size, rotation = 45)
     plt.xlim([0, x_max])
     
-    imbalance = math.ceil(max(counts0, counts1)/min(counts0, counts1))
+    imbalance = round((max(counts0, counts1)/min(counts0, counts1)),0)
     
     plt.text(max(counts0, counts1) - (max(counts0, counts1) * .15), .45, f'imbalance ~ {imbalance}:1', size=text_size)
     
@@ -58,14 +58,14 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     plt.show()
 
 
-def dataframe_describe(dataframe, year_column = 'year', target_column = 'case'):
+def dataframe_describe(dataframe, by_column = 'year', target_column = 'case'):
     
     import pandas as pd
     
     result = pd.DataFrame(columns = ['year', 'non-case', 'case', 'total', 'percentage'])
     
-    for year in dataframe[year_column].drop_duplicates().sort_values():
-        data_test = dataframe.loc[dataframe[year_column] == year]
+    for year in dataframe[by_column].drop_duplicates().sort_values():
+        data_test = dataframe.loc[dataframe[by_column] == year]
     
         case_values = data_test[target_column].value_counts()
         counts0 = case_values.get(key = 0) if case_values.get(key = 0) is not None else 0
@@ -74,7 +74,7 @@ def dataframe_describe(dataframe, year_column = 'year', target_column = 'case'):
            
         percentage = len(data_test)/len(dataframe)*100
         
-        result = result.append({'year': year,
+        result = result.append({by_column: year,
                                 'non-case': counts0,
                                 'case': counts1,
                                 'total': (counts0 + counts1),
@@ -382,6 +382,23 @@ def calculate_weights_new(training_set, multiplier = 1):
         
     return w0,w1
 
+def calculate_scale_pos_weight(training_set, multiplier = 1):
+    import math
+
+    value_counts = training_set.value_counts()
+    non_cases = value_counts.get(key = 0) if value_counts.get(key = 0) is not None else 0
+    cases = value_counts.get(key = 1) if value_counts.get(key = 1) is not None else 0
+
+    if non_cases == 0:
+        w = 0.1
+    elif cases == 0:
+        w = 10
+    else:
+        w = non_cases/cases
+    
+    w = w * multiplier
+    return w
+
 def train_lin_model(model, X_train, y_train, explain = False):
     import shap
 
@@ -390,6 +407,19 @@ def train_lin_model(model, X_train, y_train, explain = False):
     if explain:
         masker = shap.maskers.Independent(data = X_train)
         explainer = shap.LinearExplainer(model, masker = masker)
+        shap_values = explainer.shap_values(X_train)
+        return model, shap_values
+    else:
+        return model
+    
+def train_tree_model(model, X_train, y_train, explain = False):
+    import shap
+
+    model.fit(X_train, y_train)
+
+    if explain:
+        masker = shap.maskers.Independent(data = X_train)
+        explainer = shap.TreeExplainer(model, masker = masker)
         shap_values = explainer.shap_values(X_train)
         return model, shap_values
     else:
@@ -425,6 +455,37 @@ def predict_lin_model_new(trained_model, X_train, y_train, X_test, y_test, data_
     test_result.sort_values(by=[score_col], ascending = False, ignore_index = True, inplace = True)
 
     return train_result, test_result, model_coef
+
+def predict_xgb_model(trained_model, X_train, y_train, X_test, y_test, data_test, spatial_col = 'lau1', day_col = 'day', month_col = 'month', year_col = 'year', score_col = 'score', target_col = 'case'):
+    import pandas as pd
+    import numpy as np
+
+    data_train_unique = np.unique(np.concatenate((X_train, y_train.to_numpy().reshape(-1, 1)), axis=1), axis = 0)
+
+    X_train_unique = data_train_unique[:, :-1]
+    y_train_unique = data_train_unique[:, -1:]
+
+    train_probas = trained_model.predict_proba(X_train_unique)
+    test_probas = trained_model.predict_proba(X_test)
+    model_ft = trained_model.feature_importances_
+
+    train_result = pd.DataFrame()
+    train_result[target_col] = pd.Series(y_train_unique.squeeze()).astype('int')
+    train_result[score_col] = train_probas[:, 1].tolist()
+    train_result.sort_values(by=[score_col], ascending = False, ignore_index = True, inplace = True)
+    
+    test_result = pd.DataFrame()
+    test_result[spatial_col] = data_test[spatial_col].reset_index(drop = True)
+    if day_col is not None:
+        test_result[day_col] = data_test[day_col].reset_index(drop = True)
+    if month_col is not None:
+        test_result[month_col] = data_test[month_col].reset_index(drop = True)
+    test_result[year_col] = data_test[year_col].reset_index(drop = True)
+    test_result[target_col] = y_test.reset_index(drop = True).astype('int')
+    test_result[score_col] = test_probas[:, 1].tolist()
+    test_result.sort_values(by=[score_col], ascending = False, ignore_index = True, inplace = True)
+
+    return train_result, test_result, model_ft
 
 def predict_lin_model(trained_model, data_train, data_test, X_train, y_train, X_test, y_test, spatial_col = 'lau1', day_col = 'day', month_col = 'month', year_col = 'year', score_col = 'score', target_col = 'case'):
     import pandas as pd
