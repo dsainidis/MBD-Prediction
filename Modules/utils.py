@@ -49,7 +49,7 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     plt.xticks(np.arange(0, x_max, step = step), size = tick_size, rotation = 45)
     plt.xlim([0, x_max])
     
-    imbalance = round((max(counts0, counts1)/min(counts0, counts1)),0)
+    imbalance = round((max(counts0, counts1)/min(counts0, counts1)))
     
     plt.text(max(counts0, counts1) - (max(counts0, counts1) * .15), .45, f'imbalance ~ {imbalance}:1', size=text_size)
     
@@ -368,14 +368,14 @@ def calculate_weights_new(training_set, multiplier = 1):
     if non_cases >= cases:
         w0 = 1
         try:
-            w1 = math.ceil(non_cases/cases)
+            w1 = round(non_cases/cases)
         except ZeroDivisionError:
             w1 = 10
         w1 = w1 * multiplier
     else:
         w1 = 1
         try:
-            w0 = math.ceil(cases/non_cases)
+            w0 = round(cases/non_cases)
         except ZeroDivisionError:
             w0 = 10
         w0 = w0 * multiplier
@@ -648,7 +648,7 @@ def plot_trend_curve(results, score_col = 'score', cases = None, plot_min = Fals
     plt.legend(prop={'size': legend_size})
     plt.show()
 
-def plot_probability_curve(results, score_column = 'score', target_col = 'case', x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
+def plot_probability_curve(results, score_column = 'score', target_col = 'case', x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, marker_size = 0.2, figure_size = (8, 8)):
     
     import math
     import numpy as np
@@ -669,7 +669,7 @@ def plot_probability_curve(results, score_column = 'score', target_col = 'case',
     # line_plot = line[mask]
     
     plt.figure(num = None, figsize = figure_size, facecolor='w', edgecolor='b')
-    plt.scatter(x, y, color='purple', s=0.15, marker='*')
+    plt.scatter(x, y, color='purple', s=marker_size, marker='*')
     plt.plot(x, line, color='steelblue', linestyle='--', linewidth=2)
     plt.yticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
     plt.xticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
