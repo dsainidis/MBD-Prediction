@@ -418,12 +418,31 @@ def train_tree_model(model, X_train, y_train, explain = False):
     model.fit(X_train, y_train)
 
     if explain:
-        masker = shap.maskers.Independent(data = X_train)
-        explainer = shap.TreeExplainer(model, masker = masker)
+        #masker = shap.maskers.Independent(data = X_train)
+        #explainer = shap.TreeExplainer(model, masker = masker)
+        explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(X_train)
         return model, shap_values
     else:
         return model
+    
+def train_model(model, X_train, y_train, explain = False, explainer_key = 'default'):
+    import shap
+
+    trained_model = model.fit(X_train, y_train)
+
+    if explain:
+        #masker = shap.maskers.Independent(data = X_train)
+        #explainer = shap.TreeExplainer(model, masker = masker)
+        explainers = {'default': shap.Explainer(trained_model),
+                      'linear': shap.LinearExplainer(trained_model),
+                      'tree': shap.TreeExplainer(trained_model),
+                  }
+        explainer = explainers.get(explainer_key, shap.Explainer(trained_model))
+        shap_values = explainer.shap_values(X_train)
+        return trained_model, shap_values
+    else:
+        return trained_model
 
 def predict_lin_model_new(trained_model, X_train, y_train, X_test, y_test, data_test, spatial_col = 'lau1', day_col = 'day', month_col = 'month', year_col = 'year', score_col = 'score', target_col = 'case'):
     import pandas as pd
@@ -1462,6 +1481,32 @@ def convert_multiple_cases(dataframe, target_col = 'case'):
 
     return dataframe
 
+def convert_multiple_cases_array_weighted(dataframe, target_col = 'case'):
+    import numpy as np
+    import pandas as pd
+
+    unique_arrays = dataframe[target_col].value_counts().index
+
+    for arr in unique_arrays:
+        gt2 = np.unique(arr[arr >= 2])
+        if (gt2.size != 0):
+            temp_pd_series = dataframe[target_col]
+            matching_rows = temp_pd_series[temp_pd_series.apply(lambda x: np.array_equal(x, arr))]
+            new_rows = dataframe.iloc[matching_rows.index]
+            multiplier = (np.min(gt2) - 1)
+            dataframe = pd.concat([dataframe] + [new_rows] * multiplier, ignore_index=True)
+            
+    dataframe[target_col] = dataframe[target_col].apply(lambda x: np.where(x == 0, 0, 1))
+
+    return dataframe
+
+def convert_multiple_cases_array(dataframe, target_col = 'case'):
+    import numpy as np
+
+    dataframe[target_col] = dataframe[target_col].apply(lambda x: np.where(x == 0, 0, 1))
+
+    return dataframe
+
 def calculate_nearest_topological(data, topological, neighbors=1):
     import numpy as np
     from statistics import mean
@@ -1573,3 +1618,68 @@ def compute_distance(row, x1 = 'x1', y1 = 'y1', x2 = 'x2', y2 = 'y2'):
     end_point = (row[x2], row[y2])
     distance = geodesic(start_point, end_point).meters
     return distance
+
+def log_loss_vector(y_true, y_pred):
+    import numpy as np
+
+    e = 1e-15
+    y_pred = np.clip(y_pred, e, 1 - e)
+    log_loss = -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+    return log_loss
+
+
+def optimal_threashold_fbeta_vector(y_prob, y_true, beta = 1, clip_factor = 1e-8, round_factor = 2):
+    import numpy as np
+    from sklearn.metrics import precision_recall_curve
+
+    if y_prob.shape != y_true.shape:
+        raise Exception("Probability and Predictions matricies are not the same shape")
+
+    threshold_per_month = []
+    column_range = y_prob.shape[1]
+
+    for col in range(column_range):
+        precision, recall, thresholds = precision_recall_curve(y_true[:,col], y_prob[:,col])
+        precision = np.clip(precision, clip_factor, 1 - clip_factor)
+        recall = np.clip(recall, clip_factor, 1 - clip_factor)
+        fb_score = ((1 + beta**2) * (precision * recall))/((beta**2 * precision) + recall)
+        #fb_score = ((1 + beta**2) * precision * recall) / ((beta**2 * precision) + recall)
+        fb_max_index = np.argmax(fb_score)
+        optimal_threshold_fb = round(thresholds[fb_max_index], ndigits = round_factor)
+        threshold_per_month.append(optimal_threshold_fb)
+
+    return np.array(threshold_per_month)
+
+
+def optimal_threashold_fbeta_vector_custom(y_prob, y_true, beta = 1, clip_factor = 1e-8, round_factor = 2):
+    import numpy as np
+    from sklearn.metrics import precision_score, recall_score, fbeta_score
+    
+    if y_prob.shape != y_true.shape:
+        raise Exception("Probability and Predictions matricies are not the same shape")
+
+    threshold_per_month = []
+    column_range = y_prob.shape[1]
+    thresholds_pool = np.arange(0,1.01,0.01)
+
+    for col in range(column_range):
+        y_true_col = y_true[:,col]
+        y_prob_col = y_prob[:,col]
+        precision_col = []
+        recall_col = []
+        fbeta_col = []
+        for threashold in thresholds_pool:
+            y_pred_col_th = np.where(y_prob_col < threashold, 0, 1)
+            precision_col_th = precision_score(y_true_col, y_pred_col_th)
+            recall_col_th = recall_score(y_true_col, y_pred_col_th)
+            fbeta_col_th = fbeta_score(y_true_col, y_pred_col_th, beta = beta)
+
+            precision_col.append(precision_col_th)
+            recall_col.append(recall_col_th)
+            fbeta_col.append(fbeta_col_th)
+
+        fb_max_index = np.argmax(fbeta_col)
+        optimal_threshold_fb = round(thresholds_pool[fb_max_index], ndigits = round_factor)
+        threshold_per_month.append(optimal_threshold_fb)
+
+    return np.array(threshold_per_month)
