@@ -1320,8 +1320,10 @@ def process_greek(frame, column):
     frame[column] = frame[column].apply(lambda x : x.replace('ΰ','υ'))
     frame[column] = frame[column].apply(lambda x : x.replace('ό','ο'))
     frame[column] = frame[column].apply(lambda x : x.replace('ώ','ω'))
+    frame[column] = frame[column].apply(lambda x : x.replace('a','α'))
     frame[column] = frame[column].apply(lambda x : x.replace('-',' '))
     frame[column] = frame[column].apply(lambda x : x.replace('–',' '))
+    frame[column] = frame[column].apply(lambda x : x.replace('&','και'))
     frame[column] = frame[column].apply(lambda x : x.replace('ν. ',''))
 
     
