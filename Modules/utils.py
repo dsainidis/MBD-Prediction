@@ -31,11 +31,11 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     import pandas as pd
     import matplotlib.pyplot as plt
     
-    value_counts = dataframe[target_column].value_counts().values
-
-    value_counts = dataframe[target_column].value_counts()
-    counts0 = value_counts.get(key = 0) if value_counts.get(key = 0) is not None else 0
-    counts1 = value_counts.get(key = 1) if value_counts.get(key = 1) is not None else 0
+    data_year_non_cases = dataframe.loc[dataframe[target_column] == 0]
+    data_year_cases = dataframe.loc[dataframe[target_column] != 0]
+    
+    counts0 = len(data_year_non_cases)
+    counts1 = data_year_cases[target_column].sum()
     
     fig, ax = plt.subplots(figsize = figure_size)
     
@@ -58,28 +58,64 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     plt.show()
 
 
+# def dataframe_describe(dataframe, by_column = 'year', target_column = 'case'):
+    
+#     import pandas as pd
+    
+#     result = pd.DataFrame(columns = ['year', 'non-case', 'case', 'total', 'percentage'])
+    
+#     for year in dataframe[by_column].drop_duplicates().sort_values():
+#         data_test = dataframe.loc[dataframe[by_column] == year]
+    
+#         case_values = data_test[target_column].value_counts()
+#         counts0 = case_values.get(key = 0) if case_values.get(key = 0) is not None else 0
+#         counts1 = case_values.get(key = 1) if case_values.get(key = 1) is not None else 0
+
+           
+#         percentage = len(data_test)/len(dataframe)*100
+        
+#         result = result.append({by_column: year,
+#                                 'non-case': counts0,
+#                                 'case': counts1,
+#                                 'total': (counts0 + counts1),
+#                                 'percentage': f'{percentage:.2f}%'}, 
+#                                 ignore_index = True)
+        
+#     return result
+
 def dataframe_describe(dataframe, by_column = 'year', target_column = 'case'):
     
     import pandas as pd
     
-    result = pd.DataFrame(columns = ['year', 'non-case', 'case', 'total', 'percentage'])
+    result = pd.DataFrame(columns = ['year', 'non-case', 'case', 'total', '0/1 ratio'])
     
     for year in dataframe[by_column].drop_duplicates().sort_values():
-        data_test = dataframe.loc[dataframe[by_column] == year]
+        data_year = dataframe.loc[dataframe[by_column] == year]
+        data_year_non_cases = data_year.loc[data_year[target_column] == 0]
+        data_year_cases = data_year.loc[data_year[target_column] != 0]
     
-        case_values = data_test[target_column].value_counts()
-        counts0 = case_values.get(key = 0) if case_values.get(key = 0) is not None else 0
-        counts1 = case_values.get(key = 1) if case_values.get(key = 1) is not None else 0
+        counts0 = len(data_year_non_cases)
+        counts1 = data_year_cases[target_column].sum()
 
            
-        percentage = len(data_test)/len(dataframe)*100
+        ratio = counts0/counts1
         
         result = result.append({by_column: year,
                                 'non-case': counts0,
                                 'case': counts1,
                                 'total': (counts0 + counts1),
-                                'percentage': f'{percentage:.2f}%'}, 
-                                ignore_index = True)
+                                '0/1 ratio': f'{ratio:.2f}%'}, ignore_index = True)
+        
+    non_case_tot = result['non-case'].sum()
+    case_tot = result['case'].sum()
+    total_tot = result['total'].sum()
+    ratio_tot = non_case_tot/case_tot
+        
+    result = result.append({by_column: 'Total:',
+                   'non-case' : non_case_tot,
+                   'case': case_tot,
+                   'total': total_tot,
+                   '0/1 ratio': f'{ratio_tot:.2f}%'}, ignore_index = True)
         
     return result
 
@@ -97,7 +133,24 @@ def yearCV_split(dataframe, exclude_years_train = [], year_column = 'year', targ
         #      data_train = data_train.loc[~data_train[year_column].isin(exclude_years_train)]
 
         data_test = dataframe.loc[dataframe[year_column] == year]
-        data_test = data_test.drop_duplicates(keep='first')
+        #data_test = data_test.drop_duplicates(keep='first')
+        
+        yield data_train.index, data_test.index
+
+def yearCV_split_vector(dataframe, exclude_years_train = [], year_column = 'year', target_column = 'case'):
+    
+    years_sorted = dataframe[year_column].drop_duplicates().sort_values()
+    
+    for year in years_sorted:
+
+        data_train = dataframe.loc[~dataframe[year_column].isin([year]+exclude_years_train)]
+
+        # data_train = dataframe.loc[dataframe[year_column] != year]
+        # if len(exclude_years_train) > 0:
+        #      data_train = data_train.loc[~data_train[year_column].isin(exclude_years_train)]
+
+        data_test = dataframe.loc[dataframe[year_column] == year]
+        #data_test = data_test.drop_duplicates(keep='first')
         
         yield data_train.index, data_test.index
 
@@ -628,7 +681,7 @@ def plot_feature_importance(model_weights, feature_names, top = 0, title = None,
     return weights_df
 
 
-def plot_trend_curve(results, score_col = 'score', cases = None, plot_min = False, plot_max = False, plot_avg = True, plot_cases = True, x_label = 'Year', y_label = 'Average Probability', tick_size = 14, label_size = 18, legend_size = 18, text_size = 12, figure_size = (8, 6)):
+def plot_trend_curve(results, score_col = 'score', cases = None, plot_min = False, plot_max = False, plot_avg = True, plot_cases = True, x_label = 'Year', y_label = 'Average Probability', tick_size = 14, label_size = 18, legend_size = 18, text_size = 12, figure_size = (8, 6), rotation_ang = 45):
     import numpy as np
     import matplotlib.pyplot as plt
     
@@ -659,7 +712,7 @@ def plot_trend_curve(results, score_col = 'score', cases = None, plot_min = Fals
     if plot_cases:    
         plt.plot(years, cases_norm, 'black', label='Cases (normalized)')
     
-    plt.xticks(np.arange(min(years), max(years)+1), size = tick_size, rotation=20)
+    plt.xticks(np.arange(min(years), max(years)+1), size = tick_size, rotation=rotation_ang)
     plt.yticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
     plt.xlabel(x_label, size = label_size)
     plt.ylabel(y_label, size = label_size)
@@ -1651,6 +1704,23 @@ def optimal_threashold_fbeta_vector(y_prob, y_true, beta = 1, clip_factor = 1e-8
         threshold_per_month.append(optimal_threshold_fb)
 
     return np.array(threshold_per_month)
+
+def optimal_threashold_fbeta_scalar(y_prob, y_true, beta = 1, clip_factor = 1e-8, round_factor = 2):
+    import numpy as np
+    from sklearn.metrics import precision_recall_curve
+
+    if y_prob.shape != y_true.shape:
+        raise Exception("Probability and Predictions matricies are not the same shape")
+    
+    precision, recall, thresholds = precision_recall_curve(y_true, y_prob)
+    precision = np.clip(precision, clip_factor, 1 - clip_factor)
+    recall = np.clip(recall, clip_factor, 1 - clip_factor)
+    fb_score = ((1 + beta**2) * (precision * recall))/((beta**2 * precision) + recall)
+    #fb_score = ((1 + beta**2) * precision * recall) / ((beta**2 * precision) + recall)
+    fb_max_index = np.argmax(fb_score)
+    optimal_threshold_fb = round(thresholds[fb_max_index], ndigits = round_factor)
+
+    return optimal_threshold_fb
 
 
 def optimal_threashold_fbeta_vector_custom(y_prob, y_true, beta = 1, clip_factor = 1e-8, round_factor = 2):
