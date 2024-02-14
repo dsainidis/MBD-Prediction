@@ -38,6 +38,8 @@ scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis
 scp CM_previous.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/temporary/CM_previous.csv
 
 
-scp GR_CMacedonia_Timeline_NUTS3_2009-2023.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/nuts3_daily/GR_CMacedonia_Timeline_NUTS3_2009-2023.csv
+scp GR_Timeline_2009-2022.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/grid_daily/GR_Timeline_2009-2022.csv
 
 scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/nuts3_daily/filled/meantemps/GR_Attica_Timeline_NUTS3_2009-2023_filled_meantemps.csv .
+
+scp -r datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/grid_daily/ .

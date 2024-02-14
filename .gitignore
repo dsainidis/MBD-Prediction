@@ -20,3 +20,4 @@ Notebooks Description.txt
 *.pth
 *.zip
 *.npz
+*.txt
