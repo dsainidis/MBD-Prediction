@@ -720,7 +720,7 @@ def plot_trend_curve(results, score_col = 'score', cases = None, plot_min = Fals
     plt.legend(prop={'size': legend_size})
     plt.show()
 
-def plot_probability_curve(results, score_column = 'score', target_col = 'case', x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, marker_size = 0.2, figure_size = (8, 8)):
+def plot_probability_curve(results, score_column = 'score', target_col = 'case', x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, marker_size = 0.2, marker_shape ='*', figure_size = (8, 8)):
     
     import math
     import numpy as np
@@ -741,7 +741,7 @@ def plot_probability_curve(results, score_column = 'score', target_col = 'case',
     # line_plot = line[mask]
     
     plt.figure(num = None, figsize = figure_size, facecolor='w', edgecolor='b')
-    plt.scatter(x, y, color='purple', s=marker_size, marker='*')
+    plt.scatter(x, y, color='purple', s=marker_size, marker=marker_shape)
     plt.plot(x, line, color='steelblue', linestyle='--', linewidth=2)
     plt.yticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
     plt.xticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
@@ -755,7 +755,7 @@ def plot_probability_curve(results, score_column = 'score', target_col = 'case',
     return intercept, slope
 
 
-def plot_roc_curve(results, score_col = 'score', target_col = 'case', plot_gmean = False, model_name = 'Logistic Regression', x_label = 'False Positive Rate', y_label = 'True Positive Rate', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
+def plot_roc_curve(results, score_col = 'score', target_col = 'case', plot_gmean = False, clip_factor = 1e-8, model_name = 'ML Model', x_label = 'False Positive Rate', y_label = 'True Positive Rate', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
     
     import numpy as np
     import pandas as pd
@@ -766,23 +766,23 @@ def plot_roc_curve(results, score_col = 'score', target_col = 'case', plot_gmean
     y_prob = np.array(results[score_col])
 
     fpr, tpr, thresholds = roc_curve(y_true, y_prob)
+    fpr = np.clip(fpr, clip_factor, 1 - clip_factor)
+    tpr = np.clip(tpr, clip_factor, 1 - clip_factor)
+
     roc_auc = auc(fpr, tpr)
 
-    df_fpr_tpr = pd.DataFrame({'FPR':fpr, 'TPR':tpr, 'Threshold':thresholds})
-
     gmean = np.sqrt(tpr * (1 - fpr))
-    index = np.argmax(gmean)
-    optimal_threshold_roc = round(thresholds[index], ndigits = 4)
-    optimal_gmean = round(gmean[index], ndigits = 4)
-
-    optimal_fpr = round(fpr[index], ndigits = 4)
-    optimal_tpr = round(tpr[index], ndigits = 4)
+    g_max_index = np.argmax(gmean)
+    optimal_threshold_roc = round(thresholds[g_max_index], ndigits = 4)
+    optimal_gmean = round(gmean[g_max_index], ndigits = 4)
+    optimal_fpr = round(fpr[g_max_index], ndigits = 4)
+    optimal_tpr = round(tpr[g_max_index], ndigits = 4)
 
     plt.subplots(1, figsize=figure_size)
     plt.plot(fpr, tpr, color = 'steelblue', label = model_name)
     plt.plot([0, 1],  color = 'orange', ls="--", label = 'baseline')
     if plot_gmean:
-        plt.plot(optimal_fpr, optimal_tpr, marker='o', markersize = 10, color = 'red', label = f'threshold = {optimal_threshold_roc}')
+        plt.plot(optimal_fpr, optimal_tpr, marker='o', markersize = 10, color = 'red', label = f'threshold = {optimal_threshold_roc:.2f}')
     plt.grid(True)
     plt.yticks(np.arange(0, 1.1, step = 0.1), size=tick_size)
     plt.xticks(np.arange(0, 1.1, step = 0.1), size=tick_size)
@@ -793,10 +793,10 @@ def plot_roc_curve(results, score_col = 'score', target_col = 'case', plot_gmean
     plt.legend(prop={'size': legend_size})
     plt.show()
 
-    return optimal_fpr, optimal_tpr, optimal_threshold_roc, optimal_gmean
+    return optimal_fpr, optimal_tpr, optimal_gmean, optimal_threshold_roc 
 
 
-def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, plot_fbeta = False, model_name = 'Logistic Regression', x_label = 'Recall', y_label = 'Precision', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
+def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, plot_fbeta = False, clip_factor = 1e-8, model_name = 'ML Model', x_label = 'Recall', y_label = 'Precision', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, figure_size = (8, 8)):
     
     import numpy as np
     import pandas as pd
@@ -807,40 +807,39 @@ def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, p
     y_prob = np.array(results[score_col])
 
     precision, recall, thresholds = precision_recall_curve(y_true, y_prob)
-    precision_zeros = np.where(precision == 0)
-    recall_zeros = np.where(recall == 0)
-    intersect = np.intersect1d(recall_zeros, precision_zeros)
+    precision = np.clip(precision, clip_factor, 1 - clip_factor)
+    recall = np.clip(recall, clip_factor, 1 - clip_factor)
+    # precision_zeros = np.where(precision == 0)
+    # recall_zeros = np.where(recall == 0)
+    # intersect = np.intersect1d(recall_zeros, precision_zeros)
     
-    if (len(intersect) != 0):
-        min_precision = np_nth_smallest(precision, len(precision_zeros[0])+1)
-        min_recall = np_nth_smallest(recall, len(recall_zeros[0])+1)
+    # if (len(intersect) != 0):
+    #     min_precision = np_nth_smallest(precision, len(precision_zeros[0])+1)
+    #     min_recall = np_nth_smallest(recall, len(recall_zeros[0])+1)
         
-        for item in intersect:
-            precision[item] += min_precision
-            recall[item] += min_recall
+    #     for item in intersect:
+    #         precision[item] += min_precision
+    #         recall[item] += min_recall
         
     pr_auc = auc(recall, precision)
 
-    df_recall_precision = pd.DataFrame({'Precision':precision[:-1],
-                                    'Recall':recall[:-1],
-                                    'Threshold':thresholds})
-
-    fb_score = ((1 + beta**2) * precision * recall) / ((beta**2 * precision) + recall)
+    fb_score = ((1 + beta**2) * (precision * recall))/((beta**2 * precision) + recall)
     counts = np.array(np.unique(y_true, return_counts=True)).T
     pos = counts[1][1]
     neg = counts[0][1]
     baseline = pos/(pos+neg)
-    index = np.argmax(fb_score)
-    optimal_threshold_pr = round(thresholds[index], ndigits = 2)
-    optimal_fbeta = round(fb_score[index], ndigits = 4)
-    optimal_recall = round(recall[index], ndigits = 4)
-    optimal_precision = round(precision[index], ndigits = 2)
+
+    fb_max_index = np.argmax(fb_score)
+    optimal_threshold_pr = round(thresholds[fb_max_index], ndigits = 2)
+    optimal_fbeta = round(fb_score[fb_max_index], ndigits = 4)
+    optimal_recall = round(recall[fb_max_index], ndigits = 4)
+    optimal_precision = round(precision[fb_max_index], ndigits = 2)
 
     plt.subplots(1, figsize=figure_size)
     plt.plot(recall, precision, color = 'steelblue', label = model_name)
     plt.plot([baseline, baseline], ls="--", color = 'orange', label = 'baseline')
     if plot_fbeta:
-        plt.plot(optimal_recall, optimal_precision, marker='o', markersize = 10, color = 'red', label = f'threshold={optimal_threshold_pr}')
+        plt.plot(optimal_recall, optimal_precision, marker='o', markersize = 10, color = 'red', label = f'threshold={optimal_threshold_pr:.2f}')
     plt.grid(True)
     plt.yticks(np.arange(0, 1.1, step = 0.1), size=tick_size)
     plt.xticks(np.arange(0, 1.1, step = 0.1), size=tick_size)
@@ -852,7 +851,7 @@ def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, p
     plt.legend(prop={'size': legend_size})
     plt.show()
 
-    return optimal_recall, optimal_precision, optimal_threshold_pr, optimal_fbeta
+    return optimal_recall, optimal_precision, optimal_fbeta, optimal_threshold_pr 
 
 
 def evaluate_operational(results, k, score_col = 'score', target_col = 'case', prob_threshold = -1, ouput_random = False, sampling_number = 10):
