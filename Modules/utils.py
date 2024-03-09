@@ -57,32 +57,6 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     ax.bar_label(bars, label_type= 'edge', size = text_size)
     plt.show()
 
-
-# def dataframe_describe(dataframe, by_column = 'year', target_column = 'case'):
-    
-#     import pandas as pd
-    
-#     result = pd.DataFrame(columns = ['year', 'non-case', 'case', 'total', 'percentage'])
-    
-#     for year in dataframe[by_column].drop_duplicates().sort_values():
-#         data_test = dataframe.loc[dataframe[by_column] == year]
-    
-#         case_values = data_test[target_column].value_counts()
-#         counts0 = case_values.get(key = 0) if case_values.get(key = 0) is not None else 0
-#         counts1 = case_values.get(key = 1) if case_values.get(key = 1) is not None else 0
-
-           
-#         percentage = len(data_test)/len(dataframe)*100
-        
-#         result = result.append({by_column: year,
-#                                 'non-case': counts0,
-#                                 'case': counts1,
-#                                 'total': (counts0 + counts1),
-#                                 'percentage': f'{percentage:.2f}%'}, 
-#                                 ignore_index = True)
-        
-#     return result
-
 def dataframe_describe(dataframe, by_column = 'year', target_column = 'case'):
     
     import pandas as pd
@@ -99,23 +73,28 @@ def dataframe_describe(dataframe, by_column = 'year', target_column = 'case'):
 
            
         ratio = counts0/counts1
+
+        new_row = {by_column: year,
+                    'non-case': counts0,
+                    'case': counts1,
+                    'total': (counts0 + counts1),
+                    '0/1 ratio': f'{ratio:.2f}%'}
         
-        result = result.append({by_column: year,
-                                'non-case': counts0,
-                                'case': counts1,
-                                'total': (counts0 + counts1),
-                                '0/1 ratio': f'{ratio:.2f}%'}, ignore_index = True)
+        result = pd.concat([result, pd.DataFrame([new_row])], ignore_index=True)
+        
         
     non_case_tot = result['non-case'].sum()
     case_tot = result['case'].sum()
     total_tot = result['total'].sum()
     ratio_tot = non_case_tot/case_tot
-        
-    result = result.append({by_column: 'Total:',
+
+    new_row_tot = {by_column: 'Total:',
                    'non-case' : non_case_tot,
                    'case': case_tot,
                    'total': total_tot,
-                   '0/1 ratio': f'{ratio_tot:.2f}%'}, ignore_index = True)
+                   '0/1 ratio': f'{ratio_tot:.2f}%'}
+    
+    result = pd.concat([result, pd.DataFrame([new_row_tot])], ignore_index=True)
         
     return result
 
@@ -720,17 +699,24 @@ def plot_trend_curve(results, score_col = 'score', cases = None, plot_min = Fals
     plt.legend(prop={'size': legend_size})
     plt.show()
 
-def plot_probability_curve(results, score_column = 'score', target_col = 'case', x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, marker_size = 0.2, marker_shape ='*', figure_size = (8, 8)):
+def plot_probability_curve(results, score_column = 'score', target_col = 'case', augment_samples = False, x_label = 'Probability', y_label = 'Ground Truth', tick_size = 14, label_size = 18, legend_size = 18, text_size = 18, marker_size = 0.2, marker_shape ='*', figure_size = (8, 8)):
     
     import math
     import numpy as np
+    import pandas as pd
     import matplotlib.pyplot as plt
     
     results.sort_values(by=[score_column], ascending = False, ignore_index = True, inplace = True)
-    (non_case, case) = results[target_col].value_counts()
+    non_case = results[target_col].value_counts().get(0)
+    case = results[target_col].value_counts().get(1)
     factor = math.floor((non_case/case)/10)*10
-    
-    results_norm = results.append([results[results[target_col] == 1]] * factor, ignore_index=True)
+
+    if augment_samples:
+        subset = results[results[target_col] == 1]
+        copies = [subset] * factor
+        results_norm = pd.concat([results] + copies, ignore_index=True)
+    else:
+        results_norm = results
 
     x = np.array(results_norm[score_column])
     y = np.array(results_norm[target_col]).astype(int)
@@ -809,18 +795,7 @@ def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, p
     precision, recall, thresholds = precision_recall_curve(y_true, y_prob)
     precision = np.clip(precision, clip_factor, 1 - clip_factor)
     recall = np.clip(recall, clip_factor, 1 - clip_factor)
-    # precision_zeros = np.where(precision == 0)
-    # recall_zeros = np.where(recall == 0)
-    # intersect = np.intersect1d(recall_zeros, precision_zeros)
-    
-    # if (len(intersect) != 0):
-    #     min_precision = np_nth_smallest(precision, len(precision_zeros[0])+1)
-    #     min_recall = np_nth_smallest(recall, len(recall_zeros[0])+1)
-        
-    #     for item in intersect:
-    #         precision[item] += min_precision
-    #         recall[item] += min_recall
-        
+
     pr_auc = auc(recall, precision)
 
     fb_score = ((1 + beta**2) * (precision * recall))/((beta**2 * precision) + recall)
@@ -1421,20 +1396,37 @@ def fillna(dataframe,fill_list):
             dataframe[i] = dataframe[i].fillna(fill_list[i])
     return dataframe
 
-def describe_dataframe(dataframe, rounding_factor = 4, remove_zeros = False):
+# def describe_dataframe(dataframe, rounding_factor = 4, remove_zeros = False):
 
+#     import pandas as pd
+
+#     df_desc = pd.DataFrame(columns=['Column', 'Missing'])
+
+#     for col in dataframe.columns:
+#         missing_percentage = dataframe[col].isnull().sum() * 100 / len(dataframe[col])
+    
+#         df_desc = df_desc.append({'Column': col, 
+#                                 'Missing': round(missing_percentage, rounding_factor)}, ignore_index = True)
+
+#         if remove_zeros:
+#             df_desc = df_desc[df_desc["Missing"] != 0]
+
+#     return df_desc
+
+def describe_dataframe(dataframe, rounding_factor=4, remove_zeros=False):
     import pandas as pd
 
-    df_desc = pd.DataFrame(columns=['Column', 'Missing'])
+    missing_data = {'Column': [], 'Missing': []}
 
     for col in dataframe.columns:
-        missing_percentage = dataframe[col].isnull().sum() * 100 / len(dataframe[col])
-    
-        df_desc = df_desc.append({'Column': col, 
-                                'Missing': round(missing_percentage, rounding_factor)}, ignore_index = True)
-        
-        if remove_zeros:
-            df_desc = df_desc[df_desc["Missing"] != 0]
+        missing_percentage = dataframe[col].isnull().mean() * 100
+        missing_data['Column'].append(col)
+        missing_data['Missing'].append(round(missing_percentage, rounding_factor))
+
+    df_desc = pd.DataFrame(missing_data)
+
+    if remove_zeros:
+        df_desc = df_desc[df_desc["Missing"] != 0]
 
     return df_desc
 
@@ -1524,12 +1516,16 @@ def convert_temperature(dataframe, result_col = 'lst'):
     return dataframe
 
 def convert_multiple_cases(dataframe, target_col = 'case'):
+    import pandas as pd
 
     case_counts = dataframe[target_col].value_counts().index
 
     for case_count in case_counts:
         if (case_count >= 2):
-            dataframe = dataframe.append([dataframe[dataframe[target_col] == case_count]] * (case_count - 1), ignore_index=True)
+            # dataframe = dataframe.append([dataframe[dataframe[target_col] == case_count]] * (case_count - 1), ignore_index=True)
+            subset = dataframe[dataframe[target_col] == case_count]
+            copies = [subset] * (case_count - 1)
+            dataframe = pd.concat([dataframe] + copies, ignore_index=True)
             
     dataframe[target_col] = dataframe[target_col].apply(lambda x : 1 if(x > 0) else 0)
 
