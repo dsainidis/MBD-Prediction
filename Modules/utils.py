@@ -818,7 +818,7 @@ def plot_pr_curve(results, score_col = 'score', target_col = 'case', beta = 2, p
     plt.grid(True)
     plt.yticks(np.arange(0, 1.1, step = 0.1), size=tick_size)
     plt.xticks(np.arange(0, 1.1, step = 0.1), size=tick_size)
-    plt.text(0.7, 0.22, 'AUC = ' + '{:.3f}'.format(pr_auc), size=text_size)
+    plt.text(0.7, 0.22, 'AUC = ' + '{:.3f}'.format(pr_auc) + '\n(x {:.2f})'.format(pr_auc/baseline), size=text_size)
     plt.text(0, baseline + 0.01, 'y = ' + '{:.3f}'.format(baseline), size=18)
     plt.ylabel(y_label, size=label_size)
     plt.xlabel(x_label, size=label_size)
