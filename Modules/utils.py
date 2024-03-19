@@ -1232,7 +1232,7 @@ def create_grid(river_shapes, data_shapes, col_municipal='NAME', col_geometry='g
     municipal_list = [item for sublist in municipal for item in sublist]
     
     # Create final GeoDataFrame with municipalities and their cells
-    cell_df = gpd.GeoDataFrame(grid_cells_list, columns=[col_geometry], crs=from_epsg(4326))
+    cell_df = gpd.GeoDataFrame(grid_cells_list, columns=[col_geometry], crs='EPSG:4326')
     cell_df['centers'] = centers_list
     cell_df['NAME'] = municipal_list
     
