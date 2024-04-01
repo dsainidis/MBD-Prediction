@@ -44,6 +44,6 @@ scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis
 
 scp -r datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/grid_daily/ .
 
-scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/filled/GR_CMacedonia_Timeline_GRID_2016-2018_filled.csv .
+scp GR_Thrace_Timeline_GRID_2021-2023.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/GR_Thrace_Timeline_GRID_2021-2023.csv
 
-scp GR_CMacedonia_Timeline_GRID_2016-2018.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/GR_CMacedonia_Timeline_GRID_2016-2018.csv
+scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/filled/GR_Thrace_Timeline_GRID_2015-2017_filled.csv .

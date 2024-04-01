@@ -1531,7 +1531,7 @@ def convert_multiple_cases(dataframe, target_col = 'case'):
 
     return dataframe
 
-def convert_multiple_cases_array_weighted(dataframe, target_col = 'case'):
+def convert_multiple_cases_array_weighted(dataframe, target_col = 'case', mu = 1):
     import numpy as np
     import pandas as pd
 
@@ -1543,7 +1543,7 @@ def convert_multiple_cases_array_weighted(dataframe, target_col = 'case'):
             temp_pd_series = dataframe[target_col]
             matching_rows = temp_pd_series[temp_pd_series.apply(lambda x: np.array_equal(x, arr))]
             new_rows = dataframe.iloc[matching_rows.index]
-            multiplier = (np.min(gt2) - 1)
+            multiplier = (np.min(gt2) - 1) * mu
             dataframe = pd.concat([dataframe] + [new_rows] * multiplier, ignore_index=True)
             
     dataframe[target_col] = dataframe[target_col].apply(lambda x: np.where(x == 0, 0, 1))
