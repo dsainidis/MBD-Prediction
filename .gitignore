@@ -21,3 +21,5 @@ Notebooks Description.txt
 *.zip
 *.npz
 *.txt
+*.xml
+*.cst
