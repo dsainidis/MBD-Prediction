@@ -44,6 +44,6 @@ scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis
 
 scp -r datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/sainidis_files/grid_daily/ .
 
-scp GR_Thessaly_Timeline_GRID_2023.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/GR_Thessaly_Timeline_GRID_2023.csv
+scp GR_Attica_Timeline_GRID_20*.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/
 
-scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/filled/GR_Thrace_Timeline_GRID_2021-2023_filled.csv .
+scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/filled/GR_Attica_Timeline_GRID_20*_filled.csv .
