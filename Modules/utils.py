@@ -1750,3 +1750,114 @@ def optimal_threashold_fbeta_vector_custom(y_prob, y_true, beta = 1, clip_factor
         threshold_per_month.append(optimal_threshold_fb)
 
     return np.array(threshold_per_month)
+
+# Convert Matplotlib colormap to Plotly colorscale
+def matplotlib_to_plotly(cmap, pl_entries=255):
+    import numpy as np
+
+    h = 1.0/(pl_entries-1)
+    pl_colorscale = []
+
+    for k in range(pl_entries):
+        C = list(map(np.uint8, np.array(cmap(k*h)[:3])*255))
+        pl_colorscale.append([k*h, f'rgb{tuple(C)}'])
+
+    return pl_colorscale
+
+def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, geo_col = 'geometry', index_col = 'index', 
+                               color_col = 'target', hover_name = 'name', hover_data = {}, map_style = 'open-street-map',
+                               center = {'lat': 0, 'lon': 0}, zoom = 5, cmap = 'Virdis', opacity = 1, fig_height = 800, fig_width = 1200,
+                               fig_title = '', title_size = 30, title_color = 'black', title_hor = 0.5, title_ver = 0.97,
+                               geo_col_f2 = 'geometry', index_col_f2 = 'index', hover_name_f2 = 'name', hover_data_f2 = {}, 
+                               color_f2 = 'black', opacity_f2 = 1, line_width_f3 = 2, line_color_f3 = 'black',
+                               line_width_f4 = 1, line_color_f4 = 'black'):
+
+    import plotly.express as px
+    import plotly.graph_objects as go
+
+    # Create an interactive plot with Plotly
+    fig = px.choropleth_mapbox(
+        gdf1,
+        geojson=gdf1[geo_col].__geo_interface__,
+        locations=gdf1[index_col],
+        color=color_col,
+        hover_name=hover_name,
+        hover_data=hover_data,
+        mapbox_style=map_style,
+        center=center,
+        zoom=zoom,
+        color_continuous_scale = cmap,
+        opacity=opacity,
+        width=fig_width,
+        height=fig_height,
+    ).update_layout(
+        title={
+            'text': fig_title,
+            'x': title_hor,  # Adjust horizontal position (0 is left, 1 is right)
+            'y': title_ver,  # Adjust vertical position (0 is bottom, 1 is top)
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': title_size, 'color': title_color},  # Adjust font size
+        }
+    )
+
+    if gdf2 is not None:
+        fig.add_trace(
+            px.choropleth_mapbox(
+                gdf2,
+                geojson=gdf2[geo_col_f2].__geo_interface__,
+                locations=gdf2[index_col_f2],
+                hover_name=hover_name_f2,
+                hover_data=hover_data_f2,
+                color_discrete_sequence=[color_f2],  # Set a single color for all polygons in gdf2
+                opacity=opacity_f2  # Adjust opacity to make the second layer translucent
+            ).data[0]
+        ).update_traces(showlegend=False)
+
+    if gdf3 is not None:
+        for feature in gdf3.geometry:
+            if feature.geom_type == 'Polygon':
+                x, y = feature.exterior.xy
+                fig.add_trace(go.Scattermapbox(
+                    mode='lines',
+                    lon=x.tolist(),
+                    lat=y.tolist(),
+                    line=dict(width=line_width_f3, color=line_color_f3),
+                    hoverinfo='skip'
+                )).update_traces(showlegend=False)
+
+            elif feature.geom_type == 'MultiPolygon':
+                for poly in feature.geoms:
+                    x,y = poly.exterior.xy
+                    fig.add_trace(go.Scattermapbox(
+                        mode='lines',
+                        lon=x.tolist(),
+                        lat=y.tolist(),
+                        line=dict(width=line_width_f3, color=line_color_f3),
+                        hoverinfo='skip'
+                    )).update_traces(showlegend=False)
+
+    if gdf4 is not None:
+        for feature in gdf4.geometry:
+            if feature.geom_type == 'Polygon':
+                x, y = feature.exterior.xy
+                fig.add_trace(go.Scattermapbox(
+                    mode='lines',
+                    lon=x.tolist(),
+                    lat=y.tolist(),
+                    line=dict(width=line_width_f4, color=line_color_f4),
+                    hoverinfo='skip'  # Disable hover info for gdf2 boundaries
+                )).update_traces(showlegend=False)
+
+            elif feature.geom_type == 'MultiPolygon':
+                for poly in feature.geoms:
+                    x,y = poly.exterior.xy
+                    fig.add_trace(go.Scattermapbox(
+                        mode='lines',
+                        lon=x.tolist(),
+                        lat=y.tolist(),
+                        line=dict(width=line_width_f4, color=line_color_f4),
+                        hoverinfo='skip'  # Disable hover info for gdf2 boundaries
+                    )).update_traces(showlegend=False)
+            
+    return fig
