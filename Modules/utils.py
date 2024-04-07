@@ -1775,6 +1775,9 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, geo_col = 
     import plotly.express as px
     import plotly.graph_objects as go
 
+    month_dict = {5:'May', 6:'June', 7:'July', 8:'August', 9:'September', 10:'October'}
+    nuts_dict = {'EL30':'Attica', 'EL51':'East Macedonia and Thrace', 'EL52':'Central Macedonia', 'EL61':'Thessaly'}
+
     # Create an interactive plot with Plotly
     fig = px.choropleth_mapbox(
         gdf1,
@@ -1792,7 +1795,7 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, geo_col = 
         height=fig_height,
     ).update_layout(
         title={
-            'text': fig_title,
+            'text': f'{nuts_dict.get(gdf1.nuts2_id.iloc[0])} {month_dict.get(gdf1.month.iloc[0])} {gdf1.year.iloc[0]}',
             'x': title_hor,  # Adjust horizontal position (0 is left, 1 is right)
             'y': title_ver,  # Adjust vertical position (0 is bottom, 1 is top)
             'xanchor': 'center',
