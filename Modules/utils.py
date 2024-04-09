@@ -1767,7 +1767,7 @@ def matplotlib_to_plotly(cmap, pl_entries=255):
 def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, geo_col = 'geometry', index_col = 'index', 
                                color_col = 'target', hover_name = 'name', hover_data = {}, map_style = 'open-street-map',
                                center = {'lat': 0, 'lon': 0}, zoom = 5, cmap = 'Virdis', opacity = 1, fig_height = 800, fig_width = 1200,
-                               fig_title = '', title_size = 30, title_color = 'black', title_hor = 0.5, title_ver = 0.97,
+                               fig_title = None, title_size = 30, title_color = 'black', title_hor = 0.5, title_ver = 0.97,
                                geo_col_f2 = 'geometry', index_col_f2 = 'index', hover_name_f2 = 'name', hover_data_f2 = {}, 
                                color_f2 = 'black', opacity_f2 = 1, line_width_f3 = 2, line_color_f3 = 'black',
                                line_width_f4 = 1, line_color_f4 = 'black'):
@@ -1778,12 +1778,16 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, geo_col = 
     month_dict = {5:'May', 6:'June', 7:'July', 8:'August', 9:'September', 10:'October'}
     nuts_dict = {'EL30':'Attica', 'EL51':'East Macedonia and Thrace', 'EL52':'Central Macedonia', 'EL61':'Thessaly'}
 
+    if fig_title is None:
+        fig_title = f'{nuts_dict.get(gdf1.nuts2_id.iloc[0])} {month_dict.get(gdf1.month.iloc[0])} {gdf1.year.iloc[0]}'
+
     # Create an interactive plot with Plotly
     fig = px.choropleth_mapbox(
         gdf1,
         geojson=gdf1[geo_col].__geo_interface__,
         locations=gdf1[index_col],
         color=color_col,
+        range_color = [0,1],
         hover_name=hover_name,
         hover_data=hover_data,
         mapbox_style=map_style,
@@ -1795,7 +1799,7 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, geo_col = 
         height=fig_height,
     ).update_layout(
         title={
-            'text': f'{nuts_dict.get(gdf1.nuts2_id.iloc[0])} {month_dict.get(gdf1.month.iloc[0])} {gdf1.year.iloc[0]}',
+            'text': fig_title,
             'x': title_hor,  # Adjust horizontal position (0 is left, 1 is right)
             'y': title_ver,  # Adjust vertical position (0 is bottom, 1 is top)
             'xanchor': 'center',
