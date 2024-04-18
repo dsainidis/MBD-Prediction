@@ -1764,8 +1764,8 @@ def matplotlib_to_plotly(cmap, pl_entries=255):
 
     return pl_colorscale
 
-def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, gdf5 = None, geo_col = 'geometry', index_col = 'index', 
-                               color_col = 'target', hover_name = 'name', hover_data = {}, map_style = 'open-street-map',
+def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, gdf5 = None, geo_col = 'geometry', index_col = None, 
+                               color_col = 'target', hover_name = 'name', hover_data = {}, range = [0,1], map_style = 'open-street-map',
                                center = {'lat': 0, 'lon': 0}, zoom = 5, cmap = 'Virdis', opacity = 1, fig_height = 800, fig_width = 1200,
                                fig_title = None, title_size = 30, title_color = 'black', title_hor = 0.5, title_ver = 0.97,
                                geo_col_f2 = 'geometry', index_col_f2 = 'index', hover_name_f2 = 'name', hover_data_f2 = {}, 
@@ -1785,9 +1785,9 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, gdf5 = Non
     fig = px.choropleth_mapbox(
         gdf1,
         geojson=gdf1[geo_col].__geo_interface__,
-        locations=gdf1[index_col],
+        locations=gdf1.index if index_col is None else gdf1[index_col],
         color=color_col,
-        range_color = [0,1],
+        range_color = range,
         hover_name=hover_name,
         hover_data=hover_data,
         mapbox_style=map_style,
