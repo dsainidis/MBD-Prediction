@@ -25,7 +25,7 @@ time python run.py --input-file /home/datacube-epidemics/Documents/sainidis_file
 
 --------------------------------NUTS3--------------------------------
 
-scp GR_Thrace_Timeline_NUTS3_2024.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/nuts3_daily/
+scp GR_Attica_Timeline_NUTS3_2024.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/nuts3_daily/
 
 scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/nuts3_daily/filled/GR_Thrace_Timeline_NUTS3_2024_filled.csv .
 
