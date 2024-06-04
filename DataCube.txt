@@ -31,8 +31,8 @@ scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/nuts3
 
 --------------------------------GRID--------------------------------
 
-scp GR_Peloponnese_Timeline_GRID_20*.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/
+scp GR_Thrace_Timeline_GRID_20*.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/
 
-scp GR_Thessaly_Timeline_GRID_2024.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/
+scp GR_Attica_Timeline_GRID_2024.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/
 
 scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/filled/GR_Thessaly_Timeline_GRID_2024_filled.csv .
