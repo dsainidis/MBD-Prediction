@@ -25,9 +25,9 @@ time python run.py --input-file /home/datacube-epidemics/Documents/sainidis_file
 
 --------------------------------NUTS3--------------------------------
 
-scp GR_Thrace_Timeline_NUTS3_2024.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/nuts3_daily/
+scp GR_Attica_Timeline_NUTS3_2024.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/nuts3_daily/
 
-scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/nuts3_daily/filled/GR_Thrace_Timeline_NUTS3_2024_filled.csv .
+scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/nuts3_daily/filled/GR_Attica_Timeline_NUTS3_2024_filled.csv .
 
 --------------------------------GRID--------------------------------
 
@@ -41,3 +41,10 @@ scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_
 --------------------------------GEE--------------------------------
 
 scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/gitlab/mosquitoe_borne_epidemics/code/gee/operational/configurations/greece_* .
+
+scp IC_env_2024_09_2km_processed.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents
+
+./configurations/africa_ivory_coast.yml ./configurations/france_corsica.yml ./configurations/france_grand_est.yml ./configurations/france_occitanie.yml ./configurations/germany_wuerttemberg.yml ./configurations/greece_attiki.yml ./configurations/greece_crete.yml ./configurations/greece_macedonia.yml ./configurations/greece_thessaly.yml ./configurations/greece_thrace.yml ./configurations/greece_western.yml ./configurations/italy_veneto.yml ./configurations/serbia_vojvodina.yml
+
+
+
