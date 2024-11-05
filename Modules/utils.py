@@ -1234,7 +1234,7 @@ def create_grid(river_shapes, data_shapes, col_municipal='NAME', col_geometry='g
     # Create final GeoDataFrame with municipalities and their cells
     cell_df = gpd.GeoDataFrame(grid_cells_list, columns=[col_geometry], crs='EPSG:4326')
     cell_df['centers'] = centers_list
-    cell_df['NAME'] = municipal_list
+    cell_df[col_municipal] = municipal_list
     
     x = []
     y = []
@@ -1768,9 +1768,9 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, gdf5 = Non
                                color_col = 'target', hover_name = 'name', hover_data = {}, range = [0,1], map_style = 'open-street-map',
                                center = {'lat': 0, 'lon': 0}, zoom = 5, cmap = 'Virdis', opacity = 1, fig_height = 800, fig_width = 1200,
                                fig_title = None, title_size = 30, title_color = 'black', title_hor = 0.5, title_ver = 0.97,
-                               geo_col_f2 = 'geometry', index_col_f2 = 'index', hover_name_f2 = 'name', hover_data_f2 = {}, 
-                               color_f2 = 'black', opacity_f2 = 1, line_width_f3 = 2, line_color_f3 = 'black',
-                               line_width_f4 = 1, line_color_f4 = 'black', size_f5 = 6, color_f5 = '#FF0000'):
+                               geo_col_f2 = 'geometry', index_col_f2 = 'index', hover_name_f2 = 'name', hover_data_f2 = {}, color_f1 = 'grey',
+                               line_width_f1 = 0.5, color_f2 = 'black', opacity_f2 = 1, line_width_f3 = 2, line_color_f3 = 'black',
+                               line_width_f4 = 1, line_color_f4 = 'black', size_f5 = 6, color_f5 = '#FF0000', opacity_f5 = 1):
 
     import plotly.express as px
     import plotly.graph_objects as go
@@ -1779,7 +1779,10 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, gdf5 = Non
     nuts_dict = {'EL30':'Attica', 'EL51':'East Macedonia and Thrace', 'EL52':'Central Macedonia', 'EL61':'Thessaly', 'EL65':'Peloponnese'}
 
     if fig_title is None:
-        fig_title = f'{nuts_dict.get(gdf1.nuts2_id.iloc[0])} {month_dict.get(gdf1.month.iloc[0])} {gdf1.year.iloc[0]}'
+        try:
+            fig_title = f'{nuts_dict.get(gdf1.nuts2_id.iloc[0])} {month_dict.get(gdf1.month.iloc[0])} {gdf1.year.iloc[0]}'
+        except AttributeError:
+            fig_title = ' '
 
     # Create an interactive plot with Plotly
     fig = px.choropleth_mapbox(
@@ -1807,6 +1810,8 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, gdf5 = Non
             'font': {'size': title_size, 'color': title_color},  # Adjust font size
         }
     )
+
+    fig.update_traces(marker_line_color=color_f1, marker_line_width=line_width_f1)
 
     if gdf2 is not None:
         fig.add_trace(
@@ -1872,6 +1877,7 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, gdf5 = Non
             lat=gdf5.geometry.y,
             lon=gdf5.geometry.x,
             mode='markers',
+            opacity=opacity_f5,
             marker=dict(color=color_f5, size=gdf5.cases * size_f5),
             hoverinfo='text',  # Set hover info to display text
             text=['Cases: ' + str(cases) for cases in gdf5.cases], 

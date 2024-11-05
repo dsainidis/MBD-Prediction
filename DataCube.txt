@@ -37,6 +37,10 @@ scp GR_Thrace_Timeline_GRID_2024.csv datacube-epidemics@10.201.40.120:/mnt/epide
 
 scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_daily/filled/GR_Thrace_Timeline_GRID_2024_filled.csv .
 
+--------------------------------X--------------------------------
+
+scp GR_Attica_Timeline_20*.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grids/
+
 
 --------------------------------GEE--------------------------------
 
@@ -44,7 +48,7 @@ scp datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents/gitlab/m
 
 scp IC_env_2024_09_2km_processed.csv datacube-epidemics@10.201.40.120:/home/datacube-epidemics/Documents
 
-./configurations/africa_ivory_coast.yml ./configurations/france_corsica.yml ./configurations/france_grand_est.yml ./configurations/france_occitanie.yml ./configurations/germany_wuerttemberg.yml ./configurations/greece_attiki.yml ./configurations/greece_crete.yml ./configurations/greece_macedonia.yml ./configurations/greece_thessaly.yml ./configurations/greece_thrace.yml ./configurations/greece_western.yml ./configurations/italy_veneto.yml ./configurations/serbia_vojvodina.yml
+./configurations/africa_ivory_coast.yml ./configurations/france_corsica.yml ./configurations/france_grand_est.yml ./configurations/france_occitanie.yml ./configurations/germany_northeastern.yml ./configurations/germany_wuerttemberg.yml ./configurations/greece_andros.yml ./configurations/greece_attiki.yml ./configurations/greece_corfu.yml ./configurations/greece_crete.yml ./configurations/greece_euboean_gulf.yml ./configurations/greece_kalamata.yml ./configurations/greece_macedonia.yml ./configurations/greece_nafplio.yml ./configurations/greece_samos.yml ./configurations/greece_thessaly.yml ./configurations/greece_thrace.yml ./configurations/greece_western.yml ./configurations/italy_veneto.yml ./configurations/serbia_vojvodina.yml ./configurations/thailand_bangkok.yml
 
 
 
