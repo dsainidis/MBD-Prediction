@@ -729,7 +729,7 @@ def plot_probability_curve(results, score_column = 'score', target_col = 'case',
     plt.figure(num = None, figsize = figure_size, facecolor='w', edgecolor='b')
     plt.scatter(x, y, color='purple', s=marker_size, marker=marker_shape)
     plt.plot(x, line, color='steelblue', linestyle='--', linewidth=2)
-    plt.yticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
+    plt.yticks([0, 1], size=tick_size)
     plt.xticks(np.arange(0, 1.1, step = 0.1), size = tick_size)
     plt.xlabel(x_label, size = label_size)
     plt.ylabel(y_label, size = label_size)

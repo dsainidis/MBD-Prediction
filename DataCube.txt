@@ -41,6 +41,7 @@ scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grid_
 
 scp GR_Attica_Timeline_20*.csv datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grids/
 
+scp datacube-epidemics@10.201.40.120:/mnt/epidemics_storage/sainidis_files/grids/GR_Attica_Timeline_2009_filled.csv .
 
 --------------------------------GEE--------------------------------
 
