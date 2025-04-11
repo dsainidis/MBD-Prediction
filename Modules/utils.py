@@ -1386,6 +1386,20 @@ def process_italic(frame, column):
     frame[column] = frame[column].apply(lambda x : x.replace(" da ", " da " ))
     frame[column] = frame[column].apply(lambda x : x.replace(" de ", " da " ))
 
+def process_latin(frame, column):
+
+    import re
+
+    _RE_COMBINE_WHITESPACE = re.compile(r"\s+")
+
+    frame[column] = frame[column].apply(lambda x : x.lower())
+    frame[column] = frame[column].apply(lambda x : _RE_COMBINE_WHITESPACE.sub(" ", x).strip())
+    frame[column] = frame[column].apply(lambda x : re.sub(r'\([^)]*\)', '', x))
+    frame[column] = frame[column].apply(lambda x : remove_accents(x))
+    frame[column] = frame[column].apply(lambda x : x.replace("'", " " ))
+    frame[column] = frame[column].apply(lambda x : x.replace("-", " " ))
+    frame[column] = frame[column].apply(lambda x : x.replace("’", " " ))
+
 
 def fillna(dataframe,fill_list):
 

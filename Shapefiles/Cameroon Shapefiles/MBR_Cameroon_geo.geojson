@@ -1,0 +1,30 @@
+{
+	"type": "FeatureCollection",
+	"name": "MBR_Cameroon_geo",
+	"crs": 	{"type": "name", 
+			"properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+			},
+	"features": [
+					{"type": "Feature", 
+					"properties": 	{"id": 0, 
+									"width": 3.450773, 
+									"height": 6.061437, 
+									"area": 20.916645, 
+									"perimeter": 19.024421 
+									}, 
+					"geometry":   	{"type": "MultiPolygon", 
+									"coordinates":[
+													[
+														[
+															[ 12.238751411000123, 7.015953541000158 ], 
+															[ 12.238751411000123, 13.077390670000057 ], 
+															[ 15.68952465000018, 13.077390670000057 ], 
+															[ 15.68952465000018, 7.015953541000158 ], 
+															[ 12.238751411000123, 7.015953541000158 ] 
+														] 
+													]
+												] 
+									} 
+					}
+				]
+}
