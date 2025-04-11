@@ -23,3 +23,6 @@ Notebooks Description.txt
 *.txt
 *.xml
 *.cst
+*.gpkg
+*.geojson
+*.qmd
