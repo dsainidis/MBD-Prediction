@@ -26,3 +26,8 @@ Notebooks Description.txt
 *.gpkg
 *.geojson
 *.qmd
+*.pdf
+*.docx
+*.doc
+*.sbn
+*.sbx

@@ -1,6 +1,7 @@
 {
     "python.analysis.extraPaths": [
         "./Mamoth Modules",
-        "./Modules"
+        "./Modules",
+        "./NUTS3 Level/Cameroon/utils"
     ]
 }
