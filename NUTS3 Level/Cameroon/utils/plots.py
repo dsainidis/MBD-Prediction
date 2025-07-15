@@ -16,6 +16,7 @@ def plot_monthly_yearly_horizontal_bars(
     title='Monthly Malaria Cases per Year (Horizontal)',
     xlabel='Cases',
     ylabel='Year',
+    cmap='tab20',
     text_font_size = 7,
     x_ticks_rounding_factor = -2,
     x_ticks_percentage_split = 5,
@@ -38,7 +39,6 @@ def plot_monthly_yearly_horizontal_bars(
         figsize (tuple): Figure size.
         show_values (bool): Whether to label bar ends with case numbers.
     """
-
     # ────────────────
     # 1. Aggregate monthly totals
     # ────────────────
@@ -56,7 +56,14 @@ def plot_monthly_yearly_horizontal_bars(
                           .sort_index())
 
     # ────────────────
-    # 2. Plotting
+    # 2. Color Mapping
+    # ────────────────
+    cmap = plt.get_cmap(cmap)  # Can also try 'Set3', 'tab10', etc.
+    month_colors = [cmap(i % cmap.N) for i in range(12)]
+    month_colors_dict = {month: month_colors[i] for i, month in enumerate(month_order)}
+
+    # ────────────────
+    # 3. Plotting
     # ────────────────
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -70,7 +77,7 @@ def plot_monthly_yearly_horizontal_bars(
     for i, month in enumerate(months):
         month_cases = pivot_df[month]
         offsets = y_positions + i * bar_height
-        bars = ax.barh(offsets, month_cases, height=bar_height, label=month)
+        bars = ax.barh(offsets, month_cases, height=bar_height, label=month, color=month_colors_dict[month])
 
         if show_values:
             for bar in bars:
@@ -78,13 +85,17 @@ def plot_monthly_yearly_horizontal_bars(
                 y = bar.get_y() + bar.get_height() / 2
                 ax.text(width + max(pivot_df.max()) * 0.01, y, f'{int(width):,}', va='center', fontsize=text_font_size)
 
-    
-    ax.set_xticks(np.arange(0, max(pivot_df.max()) + math.ceil(10*max(pivot_df.max())/100), step=round((x_ticks_percentage_split*max(pivot_df.max())/100), x_ticks_rounding_factor)))
+    # X-axis ticks
+    x_max = max(pivot_df.max())
+    tick_step = round((x_ticks_percentage_split * x_max / 100), x_ticks_rounding_factor)
+    ax.set_xticks(np.arange(0, x_max + math.ceil(10 * x_max / 100), step=tick_step))
     plt.xticks(rotation=45, ha='right')
 
+    # Y-axis ticks
     ax.set_yticks(y_positions + bar_height * (num_months - 1) / 2)
     ax.set_yticklabels(years, fontsize=14)
 
+    # Labels and title
     ax.set_xlabel(xlabel, fontsize=16)
     ax.set_ylabel(ylabel, fontsize=16)
     ax.set_title(title, fontsize=20)

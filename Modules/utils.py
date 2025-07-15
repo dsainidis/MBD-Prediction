@@ -57,6 +57,42 @@ def plot_imbalance(dataframe, target_column = 'case', x_label = 'Number of cases
     ax.bar_label(bars, label_type= 'edge', size = text_size)
     plt.show()
 
+def plot_imbalance_vertical(dataframe, target_column='case', y_label='Number of cases',
+                            x_label=['non_case', 'case'], tick_size=14, label_size=18,
+                            text_size=12, figure_size=(6, 6)):
+    
+    import math
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    data_year_non_cases = dataframe.loc[dataframe[target_column] == 0]
+    data_year_cases = dataframe.loc[dataframe[target_column] != 0]
+    
+    counts0 = len(data_year_non_cases)
+    counts1 = 1380
+
+    fig, ax = plt.subplots(figsize=figure_size)
+
+    y_max = math.ceil(max(counts0, counts1) + (max(counts0, counts1) * 0.1))
+    step = round(math.ceil(y_max * 0.1) / 1000) * 1000
+    if step == 0:
+        step = 500
+
+    #plt.ylabel(y_label, size=label_size)
+    plt.yticks(np.arange(0, y_max, step=step), size=tick_size)
+    plt.ylim([0, y_max])
+    plt.xticks(ticks=range(len(x_label)), labels=x_label, size=tick_size)
+
+    imbalance = round((max(counts0, counts1) / min(counts0, counts1)))
+    plt.text(0.6, y_max * 0.80, f'imbalance ~ {imbalance}:1', size=text_size)
+
+    bars = ax.bar(x_label, (counts0, counts1))
+    ax.tick_params(axis='y', which='both', left=False, labelleft=False)
+    ax.bar_label(bars, label_type='edge', size=text_size)
+    
+    plt.show()
+
 def dataframe_describe(dataframe, by_column = 'year', target_column = 'case'):
     
     import pandas as pd
@@ -1905,3 +1941,9 @@ def interactive_colored_mapbox(gdf1, gdf2=None, gdf3=None, gdf4=None, gdf5 = Non
     
 
     return fig
+
+def binary_entropy(p):
+    import numpy as np
+    # Clip to avoid log(0)
+    p = np.clip(p, 1e-8, 1 - 1e-8)
+    return -p * np.log(p) - (1 - p) * np.log(1 - p)
