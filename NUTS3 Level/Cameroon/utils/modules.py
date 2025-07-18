@@ -117,3 +117,32 @@ def convert_temperature(dataframe, result_col = 'lst'):
     dataframe[result_col] = (dataframe['lst_day'] + dataframe['lst_night'])/2
 
     return dataframe
+
+def calculate_nearest_topological(data, topological, neighbors=1):
+    import numpy as np
+    from statistics import mean
+    from sklearn.neighbors import BallTree
+
+    topological['x_rad'] = topological['x'].apply(lambda x: np.deg2rad(x))
+    topological['y_rad'] = topological['y'].apply(lambda x: np.deg2rad(x))
+    
+    data['x_rad'] = data['x'].apply(lambda x: np.deg2rad(x))
+    data['y_rad'] = data['y'].apply(lambda x: np.deg2rad(x))
+    
+    ball = BallTree(topological[["y_rad", "x_rad"]].values, metric='haversine')
+    distances, indices = ball.query(data[["y_rad", "x_rad"]].values, k = neighbors)
+    
+    if neighbors>1:
+        distances = [mean(d) for d in distances]
+        distances = [(d * 6371) for d in distances]
+    else:
+        distances = [(d * 6371).tolist()[0] for d in distances]
+        
+    indices = indices.tolist()
+    indices = [i[0] for i in indices]
+    del data['x_rad']
+    del data['y_rad']
+    del topological['x_rad']
+    del topological['y_rad']
+    
+    return distances, indices
