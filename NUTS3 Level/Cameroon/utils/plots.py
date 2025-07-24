@@ -1,6 +1,7 @@
 # %%
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import numpy as np
 import calendar
 import math
@@ -164,4 +165,47 @@ def plot_grouped_barh(df, group_col, value_col,
     ax.xaxis.grid(True)
     plt.show()
 
+def plot_log2_frequency(dataset, target_col, barcolor = 'crimson'):
+    """
+    Plots the frequency of each distinct integer value in a column on a log2-scaled x-axis.
+
+    Parameters:
+    - dataset (pd.DataFrame): The input DataFrame.
+    - target_col (str): The name of the target column to analyze.
+    """
+    # Count occurrences
+    value_counts = dataset[target_col].value_counts().sort_index()
+    plot_df = value_counts.reset_index()
+    plot_df.columns = ['value', 'count']
+
+    # Replace 0 with small positive number to avoid log(0)
+    plot_df['value_log'] = plot_df['value'].replace({0: 0.5})
+    plot_df['value_str'] = plot_df['value'].astype(str)
+
+    # Create bar plot
+    fig = go.Figure(data=[
+        go.Bar(
+            x=plot_df['value_log'],
+            y=plot_df['count'],
+            text=plot_df['value_str'],
+            marker_color=barcolor
+        )
+    ])
+
+    # Configure layout
+    fig.update_layout(
+        title=f'Frequency of Each Target Value in "{target_col}" (log₂ x-axis)',
+        xaxis_type='log',
+        xaxis_title='Target Value',
+        yaxis_title='Count',
+        xaxis=dict(
+            type='log',
+            dtick=np.log10(2),
+        )
+    )
+
+    # Show actual values on hover
+    fig.update_traces(hovertemplate='Value: %{text}<br>Count: %{y}<extra></extra>')
+
+    fig.show()
 
