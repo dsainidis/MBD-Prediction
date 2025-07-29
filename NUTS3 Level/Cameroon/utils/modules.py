@@ -146,3 +146,18 @@ def calculate_nearest_topological(data, topological, neighbors=1):
     del topological['y_rad']
     
     return distances, indices
+
+def round_columns(dataframe, column_list, round_list, round_all = True, round_all_value = 6, convert_ints = True):
+
+    if round_all:
+        dataframe[dataframe.select_dtypes(include='float').columns] = dataframe.select_dtypes(include='float').round(round_all_value)
+
+    if convert_ints:
+        for col in dataframe.select_dtypes(include='float').columns:
+            if dataframe[col].dropna().apply(float.is_integer).all():
+                dataframe[col] = dataframe[col].astype('Int64')
+
+    for col, rnd in zip(column_list, round_list):
+        dataframe[col] = dataframe[col].round(rnd)
+
+    return dataframe
