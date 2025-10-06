@@ -31,7 +31,7 @@ def plot_error_dist(actual, predictions, model_type, case=''):
     plt.title('Error Distribution \n' + case)
     plt.show()
 
-def plot_hist_plotly(actual, predictions, case=''):
+def plot_hist_plotly(actual, predictions, case='', f_height=500, f_width=800):
     """
     Plots overlapping histograms of actual and predicted values using Plotly.
 
@@ -75,6 +75,8 @@ def plot_hist_plotly(actual, predictions, case=''):
         xaxis_title='Value',
         yaxis_title='Count',
         barmode='overlay',
+        width=f_width,
+        height=f_height,
         bargap=0.1,
         legend=dict(x=0.8, y=0.95)
     )
@@ -96,7 +98,9 @@ def plot_error_by_group(
     metric='mae',      # 'mae' or 'mse'
     title='',
     x_axis_label=None,
-    y_axis_label=None
+    y_axis_label=None,
+    f_width=800,
+    f_height=500
 ):
     """
     Plots the mean error (MAE or MSE) per group using Plotly.
@@ -199,6 +203,8 @@ def plot_error_by_group(
         title=title or f"{error_label} per {group_by}",
         xaxis_title=x_axis_label or group_by.capitalize(),
         yaxis_title=y_axis_label or error_label,
+        width=f_width,
+        height=f_height,
         margin=dict(t=60, b=60),
         bargap=0.3,
         uniformtext_minsize=8,

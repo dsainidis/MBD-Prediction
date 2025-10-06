@@ -24,6 +24,7 @@ Notebooks Description.txt
 *.xml
 *.cst
 *.gpkg
+*.json
 *.geojson
 *.qmd
 *.pdf
