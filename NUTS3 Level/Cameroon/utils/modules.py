@@ -161,3 +161,36 @@ def round_columns(dataframe, column_list, round_list, round_all = True, round_al
         dataframe[col] = dataframe[col].round(rnd)
 
     return dataframe
+
+def custom_round(arr, ranges = [1], thresholds =[0.5, 0.5]):
+    import numpy as np
+    """
+    Rounds each element of `arr` based on custom thresholds for given value ranges.
+    
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array of positive floats to round.
+    ranges : list of float
+        List of upper bounds defining ranges. Example: [3, 5]
+        This defines intervals: [0, 3), [3, 5), [5, ∞)
+    thresholds : list of float
+        Thresholds for rounding in each interval.
+        Must have length = len(ranges) + 1.
+        
+    Returns
+    -------
+    np.ndarray
+        Array of rounded integers.
+    """
+    arr = np.asarray(arr)
+    result = np.empty_like(arr, dtype=int)
+    
+    prev_bound = 0
+    for i, bound in enumerate(ranges + [np.inf]):
+        mask = (arr >= prev_bound) & (arr < bound)
+        t = thresholds[i]
+        result[mask] = np.floor(arr[mask] + (1 - t)).astype(int)
+        prev_bound = bound
+    
+    return result
