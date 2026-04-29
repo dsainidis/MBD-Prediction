@@ -98,6 +98,8 @@ def create_grid(river_shapes, data_shapes, col_municipal='NAME', col_geometry='g
         
     cell_df['x'] = x
     cell_df['y'] = y
+
+    cell_df['resolution_km'] = dimension
     
     return cell_df
 

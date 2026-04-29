@@ -1281,6 +1281,8 @@ def create_grid(river_shapes, data_shapes, col_municipal='NAME', col_geometry='g
         
     cell_df['x'] = x
     cell_df['y'] = y
+
+    cell_df['resolution_km'] = dimension
     
     return cell_df
 
@@ -1766,6 +1768,38 @@ def optimal_threashold_fbeta_scalar(y_prob, y_true, beta = 1, clip_factor = 1e-8
     optimal_threshold_fb = round(thresholds[fb_max_index], ndigits = round_factor)
 
     return optimal_threshold_fb
+
+def optimal_threshold_fbeta_scalar_new(y_proba, y_true, beta=1.0, step=0.01):
+    import numpy as np
+    """
+    Find threshold that maximizes F-beta on a validation/calibration set.
+    """
+    thresholds = np.arange(step, 1.0, step)
+    best_thr = 0.5
+    best_score = -np.inf
+
+    beta_sq = beta ** 2
+
+    for thr in thresholds:
+        y_pred = (y_proba >= thr).astype(int)
+
+        tp = np.sum((y_true == 1) & (y_pred == 1))
+        fp = np.sum((y_true == 0) & (y_pred == 1))
+        fn = np.sum((y_true == 1) & (y_pred == 0))
+
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+
+        if precision == 0 and recall == 0:
+            fbeta = 0.0
+        else:
+            fbeta = (1 + beta_sq) * (precision * recall) / ((beta_sq * precision) + recall)
+
+        if fbeta > best_score:
+            best_score = fbeta
+            best_thr = thr
+
+    return best_thr, best_score
 
 
 def optimal_threashold_fbeta_vector_custom(y_prob, y_true, beta = 1, clip_factor = 1e-8, round_factor = 2):
